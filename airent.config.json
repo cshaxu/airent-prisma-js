@@ -1,0 +1,8 @@
+{
+  "airentPrismaPackage": "../../../src",
+  "extensionSchemaPath": "test-schemas",
+  "schemaPath": "test-output/schemas",
+  "entityPath": "test-output/entities",
+  "augmentors": ["resources/augmentor.js"],
+  "prismaImport": "import prisma from '@/lib/prisma';"
+}

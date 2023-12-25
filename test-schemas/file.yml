@@ -1,0 +1,10 @@
+name: File
+internalPrismaFields:
+  - pages
+  - chunks
+fields:
+  - id: 1
+    name: id
+    type: string
+    internal: true
+    strategy: primitive
