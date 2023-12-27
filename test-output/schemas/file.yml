@@ -1,8 +1,9 @@
 name: File
 model: PrismaFile
-internalPrismaFields:
-  - pages
-  - chunks
+prisma:
+  internalFields:
+    - pages
+    - chunks
 fields:
   - id: 2
     name: createdAt

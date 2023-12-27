@@ -7,6 +7,7 @@ import {
   EntityConstructor,
   LoadConfig,
   LoadKey,
+  Select,
   toArrayMap,
   toObjectMap,
 } from 'airent';
@@ -56,17 +57,24 @@ export class FilePageEntityBase extends BaseEntity<
     this.initialize();
   }
 
-  public async present(fieldRequest: FilePageFieldRequest): Promise<FilePageResponse> {
+  public async present<S extends FilePageFieldRequest>(fieldRequest: S): Promise<Select<FilePageResponse, S>> {
     return {
-      id: fieldRequest.id === undefined ? undefined : this.id,
-      createdAt: fieldRequest.createdAt === undefined ? undefined : this.createdAt,
-      updatedAt: fieldRequest.updatedAt === undefined ? undefined : this.updatedAt,
-      fileId: fieldRequest.fileId === undefined ? undefined : this.fileId,
-      pageId: fieldRequest.pageId === undefined ? undefined : this.pageId,
-      lines: fieldRequest.lines === undefined ? undefined : this.lines,
-      file: fieldRequest.file === undefined ? undefined : await this.getFile().then((one) => one.present(fieldRequest.file!)),
-      chunks: fieldRequest.chunks === undefined ? undefined : await this.getChunks().then((a) => Promise.all(a.map((one) => one.present(fieldRequest.chunks!)))),
-    };
+      ...(fieldRequest.id !== undefined && { id: this.id }),
+      ...(fieldRequest.createdAt !== undefined && { createdAt: this.createdAt }),
+      ...(fieldRequest.updatedAt !== undefined && { updatedAt: this.updatedAt }),
+      ...(fieldRequest.fileId !== undefined && { fileId: this.fileId }),
+      ...(fieldRequest.pageId !== undefined && { pageId: this.pageId }),
+      ...(fieldRequest.lines !== undefined && { lines: this.lines }),
+      ...(fieldRequest.file !== undefined && { file: await this.getFile().then((one) => one.present(fieldRequest.file!)) }),
+      ...(fieldRequest.chunks !== undefined && { chunks: await this.getChunks().then((a) => Promise.all(a.map((one) => one.present(fieldRequest.chunks!)))) }),
+    } as Select<FilePageResponse, S>;
+  }
+
+  public static async presentMany<
+    ENTITY extends FilePageEntityBase,
+    S extends FilePageFieldRequest
+  >(entities: ENTITY[], fieldRequest: S): Promise<Select<FilePageResponse, S>[]> {
+    return await Promise.all(entities.map((one) => one.present(fieldRequest)));
   }
 
   /** associations */

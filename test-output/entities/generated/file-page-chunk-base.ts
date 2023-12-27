@@ -7,6 +7,7 @@ import {
   EntityConstructor,
   LoadConfig,
   LoadKey,
+  Select,
   toArrayMap,
   toObjectMap,
 } from 'airent';
@@ -59,19 +60,26 @@ export class FilePageChunkEntityBase extends BaseEntity<
     this.initialize();
   }
 
-  public async present(fieldRequest: FilePageChunkFieldRequest): Promise<FilePageChunkResponse> {
+  public async present<S extends FilePageChunkFieldRequest>(fieldRequest: S): Promise<Select<FilePageChunkResponse, S>> {
     return {
-      id: fieldRequest.id === undefined ? undefined : this.id,
-      createdAt: fieldRequest.createdAt === undefined ? undefined : this.createdAt,
-      updatedAt: fieldRequest.updatedAt === undefined ? undefined : this.updatedAt,
-      fileId: fieldRequest.fileId === undefined ? undefined : this.fileId,
-      pageId: fieldRequest.pageId === undefined ? undefined : this.pageId,
-      chunkId: fieldRequest.chunkId === undefined ? undefined : this.chunkId,
-      startLineId: fieldRequest.startLineId === undefined ? undefined : this.startLineId,
-      endLineId: fieldRequest.endLineId === undefined ? undefined : this.endLineId,
-      file: fieldRequest.file === undefined ? undefined : await this.getFile().then((one) => one.present(fieldRequest.file!)),
-      page: fieldRequest.page === undefined ? undefined : await this.getPage().then((one) => one.present(fieldRequest.page!)),
-    };
+      ...(fieldRequest.id !== undefined && { id: this.id }),
+      ...(fieldRequest.createdAt !== undefined && { createdAt: this.createdAt }),
+      ...(fieldRequest.updatedAt !== undefined && { updatedAt: this.updatedAt }),
+      ...(fieldRequest.fileId !== undefined && { fileId: this.fileId }),
+      ...(fieldRequest.pageId !== undefined && { pageId: this.pageId }),
+      ...(fieldRequest.chunkId !== undefined && { chunkId: this.chunkId }),
+      ...(fieldRequest.startLineId !== undefined && { startLineId: this.startLineId }),
+      ...(fieldRequest.endLineId !== undefined && { endLineId: this.endLineId }),
+      ...(fieldRequest.file !== undefined && { file: await this.getFile().then((one) => one.present(fieldRequest.file!)) }),
+      ...(fieldRequest.page !== undefined && { page: await this.getPage().then((one) => one.present(fieldRequest.page!)) }),
+    } as Select<FilePageChunkResponse, S>;
+  }
+
+  public static async presentMany<
+    ENTITY extends FilePageChunkEntityBase,
+    S extends FilePageChunkFieldRequest
+  >(entities: ENTITY[], fieldRequest: S): Promise<Select<FilePageChunkResponse, S>[]> {
+    return await Promise.all(entities.map((one) => one.present(fieldRequest)));
   }
 
   /** associations */

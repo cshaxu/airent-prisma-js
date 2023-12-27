@@ -7,6 +7,7 @@ import {
   EntityConstructor,
   LoadConfig,
   LoadKey,
+  Select,
   toArrayMap,
   toObjectMap,
 } from 'airent';
@@ -52,12 +53,19 @@ export class FileEntityBase extends BaseEntity<
     this.initialize();
   }
 
-  public async present(fieldRequest: FileFieldRequest): Promise<FileResponse> {
+  public async present<S extends FileFieldRequest>(fieldRequest: S): Promise<Select<FileResponse, S>> {
     return {
-      createdAt: fieldRequest.createdAt === undefined ? undefined : this.createdAt,
-      size: fieldRequest.size === undefined ? undefined : this.size,
-      type: fieldRequest.type === undefined ? undefined : this.type,
-    };
+      ...(fieldRequest.createdAt !== undefined && { createdAt: this.createdAt }),
+      ...(fieldRequest.size !== undefined && { size: this.size }),
+      ...(fieldRequest.type !== undefined && { type: this.type }),
+    } as Select<FileResponse, S>;
+  }
+
+  public static async presentMany<
+    ENTITY extends FileEntityBase,
+    S extends FileFieldRequest
+  >(entities: ENTITY[], fieldRequest: S): Promise<Select<FileResponse, S>[]> {
+    return await Promise.all(entities.map((one) => one.present(fieldRequest)));
   }
 
   /** associations */

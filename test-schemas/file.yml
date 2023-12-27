@@ -1,7 +1,8 @@
 name: File
-internalPrismaFields:
-  - pages
-  - chunks
+prisma:
+  internalFields:
+    - pages
+    - chunks
 fields:
   - id: 1
     name: id
