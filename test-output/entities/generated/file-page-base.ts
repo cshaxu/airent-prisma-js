@@ -8,6 +8,7 @@ import {
   LoadConfig,
   LoadKey,
   Select,
+  sequential,
   toArrayMap,
   toObjectMap,
 } from 'airent';
@@ -74,7 +75,7 @@ export class FilePageEntityBase extends BaseEntity<
     ENTITY extends FilePageEntityBase,
     S extends FilePageFieldRequest
   >(entities: ENTITY[], fieldRequest: S): Promise<Select<FilePageResponse, S>[]> {
-    return await Promise.all(entities.map((one) => one.present(fieldRequest)));
+    return await sequential(entities.map((one) => () => one.present(fieldRequest)));
   }
 
   /** associations */

@@ -8,6 +8,7 @@ import {
   LoadConfig,
   LoadKey,
   Select,
+  sequential,
   toArrayMap,
   toObjectMap,
 } from 'airent';
@@ -79,7 +80,7 @@ export class FilePageChunkEntityBase extends BaseEntity<
     ENTITY extends FilePageChunkEntityBase,
     S extends FilePageChunkFieldRequest
   >(entities: ENTITY[], fieldRequest: S): Promise<Select<FilePageChunkResponse, S>[]> {
-    return await Promise.all(entities.map((one) => one.present(fieldRequest)));
+    return await sequential(entities.map((one) => () => one.present(fieldRequest)));
   }
 
   /** associations */
