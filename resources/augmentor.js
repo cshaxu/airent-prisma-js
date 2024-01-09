@@ -73,7 +73,7 @@ function buildPrismaManyMethodLines(entity, prismaMethod) /* Code[] */ {
   const afterLines = ["  return (this as any).fromArray(models);", "}"];
 
   const variableName = auxiliaryFields.length === 0 ? "models" : "prismaModels";
-  const prismaLoaderLine = `  const ${variableName} = await prisma.${prismaModelName}.${prismaMethod}(args)`;
+  const prismaLoaderLine = `  const ${variableName} = await prisma.${prismaModelName}.${prismaMethod}(args);`;
 
   if (auxiliaryFields.length === 0) {
     return [...beforeLines, prismaLoaderLine, ...afterLines];

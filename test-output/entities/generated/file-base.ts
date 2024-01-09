@@ -146,7 +146,7 @@ export class FileEntityBase extends BaseEntity<
     this: EntityConstructor<PrismaFile, ENTITY>,
     args: Prisma.SelectSubset<T, Prisma.FileFindManyArgs>,
   ): Promise<ENTITY[]> {
-    const models = await prisma.file.findMany(args)
+    const models = await prisma.file.findMany(args);
     return (this as any).fromArray(models);
   }
 

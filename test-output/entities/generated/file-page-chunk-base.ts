@@ -161,7 +161,7 @@ export class FilePageChunkEntityBase extends BaseEntity<
     this: EntityConstructor<PrismaFilePageChunk, ENTITY>,
     args: Prisma.SelectSubset<T, Prisma.FilePageChunkFindManyArgs>,
   ): Promise<ENTITY[]> {
-    const models = await prisma.filePageChunk.findMany(args)
+    const models = await prisma.filePageChunk.findMany(args);
     return (this as any).fromArray(models);
   }
 
