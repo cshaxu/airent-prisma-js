@@ -1,42 +1,52 @@
 name: FilePageChunk
-model: PrismaFilePageChunk
+model: FilePageChunkModel
 types:
   - name: PrismaFilePageChunk
     aliasOf: FilePageChunk
     import: '@prisma/client'
+  - name: FilePageChunkModel
+    define: 'PrismaFilePageChunk & { file?: FileModel; page?: FilePageModel }'
 fields:
   - id: 1
     name: id
     type: string
     strategy: primitive
+    isPrisma: true
   - id: 2
     name: createdAt
     type: Date
     strategy: primitive
+    isPrisma: true
   - id: 3
     name: updatedAt
     type: Date
     strategy: primitive
+    isPrisma: true
   - id: 4
     name: fileId
     type: string
     strategy: primitive
+    isPrisma: true
   - id: 5
     name: pageId
     type: number
     strategy: primitive
+    isPrisma: true
   - id: 6
     name: chunkId
     type: number
     strategy: primitive
+    isPrisma: true
   - id: 7
     name: startLineId
     type: number
     strategy: primitive
+    isPrisma: true
   - id: 8
     name: endLineId
     type: number
     strategy: primitive
+    isPrisma: true
   - id: 9
     name: file
     type: File
@@ -45,6 +55,7 @@ fields:
       - fileId
     targetFields:
       - id
+    isPrisma: true
   - id: 10
     name: page
     type: FilePage
@@ -55,3 +66,4 @@ fields:
     targetFields:
       - fileId
       - pageId
+    isPrisma: true

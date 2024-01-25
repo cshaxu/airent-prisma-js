@@ -1,6 +1,8 @@
 import { batchLoad } from '../../../src';
 import { Prisma } from '@prisma/client';
 import prisma from '@/lib/prisma';
+import { FileModel } from './file-type';
+import { FilePageModel } from './file-page-type';
 import {
   AsyncLock,
   BaseEntity,
@@ -17,6 +19,7 @@ import {
 import {
   FilePageChunkFieldRequest,
   FilePageChunkResponse,
+  FilePageChunkModel,
 } from './file-page-chunk-type';
 
 /** associations */
@@ -27,7 +30,7 @@ import { FilePageEntity } from '../file-page';
 import { FilePageChunk as PrismaFilePageChunk } from '@prisma/client';
 
 export class FilePageChunkEntityBase extends BaseEntity<
-  PrismaFilePageChunk, FilePageChunkFieldRequest, FilePageChunkResponse
+  FilePageChunkModel, FilePageChunkFieldRequest, FilePageChunkResponse
 > {
   public id: string;
   public createdAt: Date;
@@ -43,7 +46,7 @@ export class FilePageChunkEntityBase extends BaseEntity<
   protected page?: FilePageEntity;
 
   public constructor(
-    model: PrismaFilePageChunk,
+    model: FilePageChunkModel,
     group: FilePageChunkEntityBase[],
     lock: AsyncLock,
   ) {
@@ -58,7 +61,7 @@ export class FilePageChunkEntityBase extends BaseEntity<
     this.startLineId = model.startLineId;
     this.endLineId = model.endLineId;
 
-    this.initialize();
+    this.initialize(model);
   }
 
   public async present<S extends FilePageChunkFieldRequest>(fieldRequest: S): Promise<Select<FilePageChunkResponse, S>> {
@@ -152,13 +155,22 @@ export class FilePageChunkEntityBase extends BaseEntity<
     this.page = page;
   }
 
+  protected initialize(model: FilePageChunkModel): void {
+    if (model.file !== undefined) {
+      this.file = FileEntity.fromOne({ ...model.file });
+    }
+    if (model.page !== undefined) {
+      this.page = FilePageEntity.fromOne({ ...model.page });
+    }
+  }
+
   /** prisma wrappers */
 
   public static async findMany<
     ENTITY extends FilePageChunkEntityBase,
     T extends Prisma.FilePageChunkFindManyArgs,
   >(
-    this: EntityConstructor<PrismaFilePageChunk, ENTITY>,
+    this: EntityConstructor<FilePageChunkModel, ENTITY>,
     args: Prisma.SelectSubset<T, Prisma.FilePageChunkFindManyArgs>,
   ): Promise<ENTITY[]> {
     const models = await prisma.filePageChunk.findMany(args);
@@ -169,7 +181,7 @@ export class FilePageChunkEntityBase extends BaseEntity<
     ENTITY extends FilePageChunkEntityBase,
     T extends Prisma.FilePageChunkFindUniqueArgs,
   >(
-    this: EntityConstructor<PrismaFilePageChunk, ENTITY>,
+    this: EntityConstructor<FilePageChunkModel, ENTITY>,
     args: Prisma.SelectSubset<T, Prisma.FilePageChunkFindUniqueArgs>,
   ): Promise<ENTITY | null> {
     const model = await prisma.filePageChunk.findUnique(args);
@@ -183,7 +195,7 @@ export class FilePageChunkEntityBase extends BaseEntity<
     ENTITY extends FilePageChunkEntityBase,
     T extends Prisma.FilePageChunkFindFirstArgs,
   >(
-    this: EntityConstructor<PrismaFilePageChunk, ENTITY>,
+    this: EntityConstructor<FilePageChunkModel, ENTITY>,
     args: Prisma.SelectSubset<T, Prisma.FilePageChunkFindFirstArgs>,
   ): Promise<ENTITY | null> {
     const model = await prisma.filePageChunk.findFirst(args);
@@ -197,7 +209,7 @@ export class FilePageChunkEntityBase extends BaseEntity<
     ENTITY extends FilePageChunkEntityBase,
     T extends Prisma.FilePageChunkFindUniqueOrThrowArgs,
   >(
-    this: EntityConstructor<PrismaFilePageChunk, ENTITY>,
+    this: EntityConstructor<FilePageChunkModel, ENTITY>,
     args: Prisma.SelectSubset<T, Prisma.FilePageChunkFindUniqueOrThrowArgs>,
   ): Promise<ENTITY> {
     const model = await prisma.filePageChunk.findUniqueOrThrow(args);
@@ -208,7 +220,7 @@ export class FilePageChunkEntityBase extends BaseEntity<
     ENTITY extends FilePageChunkEntityBase,
     T extends Prisma.FilePageChunkFindFirstOrThrowArgs,
   >(
-    this: EntityConstructor<PrismaFilePageChunk, ENTITY>,
+    this: EntityConstructor<FilePageChunkModel, ENTITY>,
     args: Prisma.SelectSubset<T, Prisma.FilePageChunkFindFirstOrThrowArgs>,
   ): Promise<ENTITY> {
     const model = await prisma.filePageChunk.findFirstOrThrow(args);
@@ -219,7 +231,7 @@ export class FilePageChunkEntityBase extends BaseEntity<
     ENTITY extends FilePageChunkEntityBase,
     T extends Prisma.FilePageChunkUpsertArgs,
   >(
-    this: EntityConstructor<PrismaFilePageChunk, ENTITY>,
+    this: EntityConstructor<FilePageChunkModel, ENTITY>,
     args: Prisma.SelectSubset<T, Prisma.FilePageChunkUpsertArgs>,
   ): Promise<ENTITY> {
     const model = await prisma.filePageChunk.upsert(args);
@@ -230,7 +242,7 @@ export class FilePageChunkEntityBase extends BaseEntity<
     ENTITY extends FilePageChunkEntityBase,
     T extends Prisma.FilePageChunkCreateArgs,
   >(
-    this: EntityConstructor<PrismaFilePageChunk, ENTITY>,
+    this: EntityConstructor<FilePageChunkModel, ENTITY>,
     args: Prisma.SelectSubset<T, Prisma.FilePageChunkCreateArgs>,
   ): Promise<ENTITY> {
     const model = await prisma.filePageChunk.create(args);
@@ -241,7 +253,7 @@ export class FilePageChunkEntityBase extends BaseEntity<
     ENTITY extends FilePageChunkEntityBase,
     T extends Prisma.FilePageChunkUpdateArgs,
   >(
-    this: EntityConstructor<PrismaFilePageChunk, ENTITY>,
+    this: EntityConstructor<FilePageChunkModel, ENTITY>,
     args: Prisma.SelectSubset<T, Prisma.FilePageChunkUpdateArgs>,
   ): Promise<ENTITY> {
     const model = await prisma.filePageChunk.update(args);
@@ -252,7 +264,7 @@ export class FilePageChunkEntityBase extends BaseEntity<
     ENTITY extends FilePageChunkEntityBase,
     T extends Prisma.FilePageChunkDeleteArgs,
   >(
-    this: EntityConstructor<PrismaFilePageChunk, ENTITY>,
+    this: EntityConstructor<FilePageChunkModel, ENTITY>,
     args: Prisma.SelectSubset<T, Prisma.FilePageChunkDeleteArgs>,
   ): Promise<ENTITY> {
     const model = await prisma.filePageChunk.delete(args);

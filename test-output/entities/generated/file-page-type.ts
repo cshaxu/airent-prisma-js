@@ -1,7 +1,13 @@
+import { FileModel } from './file-type';
+import { FilePageChunkModel } from './file-page-chunk-type';
 import { FileFieldRequest, FileResponse } from './file-type';
 import { FilePageChunkFieldRequest, FilePageChunkResponse } from './file-page-chunk-type';
 import { FilePage as PrismaFilePage } from '@prisma/client';
 import { JsonValue as PrismaJsonValue } from '@prisma/client/runtime/library';
+
+/** structs */
+
+export type FilePageModel = PrismaFilePage & { file?: FileModel; chunks?: FilePageChunkModel[] };
 
 export type FilePageFieldRequest = {
   id?: boolean;

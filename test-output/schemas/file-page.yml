@@ -1,5 +1,5 @@
 name: FilePage
-model: PrismaFilePage
+model: FilePageModel
 types:
   - name: PrismaFilePage
     aliasOf: FilePage
@@ -7,31 +7,39 @@ types:
   - name: PrismaJsonValue
     aliasOf: JsonValue
     import: '@prisma/client/runtime/library'
+  - name: FilePageModel
+    define: 'PrismaFilePage & { file?: FileModel; chunks?: FilePageChunkModel[] }'
 fields:
   - id: 1
     name: id
     type: string
     strategy: primitive
+    isPrisma: true
   - id: 2
     name: createdAt
     type: Date
     strategy: primitive
+    isPrisma: true
   - id: 3
     name: updatedAt
     type: Date
     strategy: primitive
+    isPrisma: true
   - id: 4
     name: fileId
     type: string
     strategy: primitive
+    isPrisma: true
   - id: 5
     name: pageId
     type: number
     strategy: primitive
+    isPrisma: true
   - id: 6
     name: lines
     type: PrismaJsonValue
     strategy: primitive
+    isPrisma: true
   - id: 7
     name: file
     type: File
@@ -40,6 +48,7 @@ fields:
       - fileId
     targetFields:
       - id
+    isPrisma: true
   - id: 8
     name: chunks
     type: FilePageChunk[]
@@ -50,3 +59,4 @@ fields:
     targetFields:
       - fileId
       - pageId
+    isPrisma: true

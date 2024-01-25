@@ -6,6 +6,7 @@ const utils = require("airent/resources/utils.js");
  *
  * YAML FLAGS
  * - isPrisma: false | undefined, top-level flag, false to skip generating prisma wrappers
+ * - isPrisma: boolean | undefined, field-level flag to note field as prisma generated field
  * - prismaLoader: boolean | undefined, field-level flag to decide whether to generate loader for the field
  */
 
@@ -31,7 +32,27 @@ function buildBeforeBase(entity, config) /* Code[] */ {
   const prismaImport =
     JSON.parse(JSON.stringify(config.prismaImport)) ??
     "import prisma from 'TODO: specify prismaImport in your airent config';";
-  return [...requiredImports, prismaImport];
+
+  return [...requiredImports, prismaImport, ...buildModelImports(entity)];
+}
+
+// build entity.code.beforeType
+function buildBeforeType(entity) /* Code[] */ {
+  return buildModelImports(entity);
+}
+
+function buildModelImports(entity) /* Code[] */ {
+  const prismaAssociationFields = entity.fields
+    .filter(utils.isAssociationField)
+    .filter((f) => f.isPrisma);
+  return prismaAssociationFields
+    .map((f) => f._type)
+    .map(
+      (t) =>
+        `import { ${utils.toTitleCase(t.name)}Model } from './${
+          t.strings.typePackage
+        }';`
+    );
 }
 
 // build entity.code.insideBase
@@ -147,6 +168,42 @@ function buildPrismaPassThruMethodLines(entity, prismaMethod) /* Code[] */ {
   ];
 }
 
+function buildInitializeMethodLines(entity) /* Code[] */ {
+  const auxiliaryFields = getAuxiliaryFields(entity);
+  const auxiliaryFieldSetters = auxiliaryFields
+    .map((af) => af.name)
+    .map((afn) => `${afn}: this.${afn}`)
+    .join(", ");
+  const auxiliaryFieldSettersString =
+    auxiliaryFields.length === 0 ? "" : `, ${auxiliaryFieldSetters}`;
+  const lines = entity.fields
+    .filter(utils.isAssociationField)
+    .filter((f) => f.isPrisma)
+    .flatMap((f) => [
+      `if (model.${f.name} !== undefined) {`,
+      `  this.${f.name} = ${
+        utils.isNullableField(f) ? `model.${f.name} === null ? null : ` : ""
+      }${f._type._entity.strings.entityClass}.${
+        utils.isArrayField(f) ? "fromArray" : "fromOne"
+      }(${
+        utils.isArrayField(f)
+          ? `model.${f.name}.map((m) => ({ ...m${auxiliaryFieldSettersString} }))`
+          : `{ ...model.${f.name}${auxiliaryFieldSettersString} }`
+      });`,
+      "}",
+    ])
+    .map((line) => `  ${line}`);
+  if (lines.length === 0) {
+    return [];
+  }
+  return [
+    "",
+    `protected initialize(model: ${entity.model}): void {`,
+    ...lines,
+    "}",
+  ];
+}
+
 function buildInsideBase(entity) /* Code[] */ {
   if (entity.isPrisma === false) {
     return [];
@@ -169,6 +226,7 @@ function buildInsideBase(entity) /* Code[] */ {
     "groupBy",
   ];
   return [
+    ...buildInitializeMethodLines(entity),
     "",
     "/** prisma wrappers */",
     ...buildPrismaManyMethodLines(entity, "findMany"),
@@ -288,8 +346,10 @@ function augmentOne(entity, config, isVerbose) /* void */ {
   }
   const prismaBeforeBase = buildBeforeBase(entity, config);
   const prismaInsideBase = buildInsideBase(entity);
+  const prismaBeforeType = buildBeforeType(entity);
   entity.code.beforeBase.push(...prismaBeforeBase);
   entity.code.insideBase.push(...prismaInsideBase);
+  entity.code.beforeType.push(...prismaBeforeType);
   entity.skipSelfLoader = true;
   // entity.code.selfLoaderLines = buildSelfLoaderLines(entity);
   entity.fields.filter(utils.isAssociationField).forEach((field) => {

@@ -5,6 +5,8 @@ const fs = require("fs");
 const yaml = require("js-yaml");
 const path = require("path");
 
+const utils = require("airent/resources/utils.js");
+
 const PROJECT_PATH = process.cwd();
 const CONFIG_FILE_PATH = path.join(PROJECT_PATH, "airent.config.json");
 const PRISMA_DBML_FILE_PATH = path.join(
@@ -17,10 +19,6 @@ function toKababCase(string) /** string */ {
     .replace(/_/g, "-")
     .replace(/([a-z])([A-Z])/g, "$1-$2")
     .toLowerCase();
-}
-
-function toPrimitiveTypeName(string) /** string */ {
-  return string.split("|")[0].split("[]")[0].trim();
 }
 
 async function sequential(functions) {
@@ -102,7 +100,7 @@ function buildTableSchema(table, enums, refs) {
   const { name: entityName } = table;
   const entity = {
     name: entityName,
-    model: `Prisma${entityName}`,
+    model: `${entityName}Model`,
     types: [
       {
         name: `Prisma${entityName}`,
@@ -166,6 +164,7 @@ function buildTableSchema(table, enums, refs) {
       }
     }
     if (field.type) {
+      field.isPrisma = true;
       entity.fields.push(field);
     }
   });
@@ -199,9 +198,10 @@ function merge(inputSchema, tableSchema, isVerbose) {
   const inputFieldNames = new Set(inputFields.map((f) => f.name));
   const internalPrismaFields = inputSchema.prisma?.internalFields ?? [];
   const tableFields = tableSchema.fields
-    .map((f) =>
-      internalPrismaFields.includes(f.name) ? { ...f, internal: true } : f
-    )
+    .map((f) => ({
+      ...f,
+      ...(internalPrismaFields.includes(f.name) && { internal: true }),
+    }))
     .filter(
       (f) =>
         !inputFieldNames.has(f.name) &&
@@ -215,17 +215,16 @@ function merge(inputSchema, tableSchema, isVerbose) {
     (f) => !inputTypeNames.has(f.name)
   );
 
-  const entity = { name, model, ...inputSchema };
-  const referencedTypeNameSet = new Set([
-    entity.model,
-    ...fields.map((f) => f.type).map(toPrimitiveTypeName),
-  ]);
-  const types = [...tableTypes, ...inputTypes].filter(
-    (t) => t.import === undefined || referencedTypeNameSet.has(t.name)
-  );
-  entity.types = types;
-  entity.fields = fields;
-  return entity;
+  const {
+    name: _name,
+    model: _model,
+    types: _types,
+    fields: _fields,
+    ...extras
+  } = inputSchema;
+
+  const types = [...tableTypes, ...inputTypes];
+  return { name, model, ...extras, types, fields };
 }
 
 function reconcile(inputSchemas, tableSchemas, isVerbose) {
@@ -241,11 +240,39 @@ function reconcile(inputSchemas, tableSchemas, isVerbose) {
   return schemaNames.map((schemaName) => {
     const tableSchema = tableSchemas.find((s) => s.name === schemaName);
     const inputSchema = inputSchemas.find((s) => s.name === schemaName);
-    return !tableSchema
+    const entity = !tableSchema
       ? inputSchema
       : !inputSchema
       ? tableSchema
       : merge(inputSchema, tableSchema, isVerbose);
+
+    const entName = utils.toTitleCase(entity.name);
+    const prismaAssociationFields = entity.fields
+      .filter(utils.isAssociationField)
+      .filter((t) => t.isPrisma);
+    const prismaModelAssociationsString = prismaAssociationFields
+      .map(
+        (f) =>
+          `${f.name}?: ${utils.toTitleCase(
+            utils.toPrimitiveTypeName(f.type)
+          )}Model${
+            utils.isArrayField(f)
+              ? "[]"
+              : utils.isNullableField(f)
+              ? " | null"
+              : ""
+          }`
+      )
+      .join("; ");
+    const modelDefinition = `Prisma${entName}${
+      prismaAssociationFields.length === 0
+        ? ""
+        : ` & { ${prismaModelAssociationsString} }`
+    }`;
+    const modelType = { name: `${entName}Model`, define: modelDefinition };
+    entity.types.push(modelType);
+
+    return entity;
   });
 }
 
@@ -255,7 +282,7 @@ async function generateOne(entity, outputPath, isVerbose) {
   if (isVerbose) {
     console.log(`[AIRENT-PRISMA/INFO] Generating YAML ${outputFilePath} ...`);
   }
-  const content = yaml.dump(entity);
+  const content = yaml.dump(entity, { lineWidth: -1 });
   await fs.promises.writeFile(outputFilePath, content, "utf-8");
 }
 
