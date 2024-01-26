@@ -40,6 +40,8 @@ async function loadConfig(isVerbose) {
   const loadedConfig = {
     schemaPath: path.join(PROJECT_PATH, extensionSchemaPath),
     outputPath: path.join(PROJECT_PATH, schemaPath),
+    prismaModelUniversalTypes: config.prismaModelUniversalTypes ?? [],
+    prismaModelUniversalFields: config.prismaModelUniversalFields ?? [],
   };
   if (isVerbose) {
     console.log(loadedConfig);
@@ -98,6 +100,8 @@ const NATIVE_PRISMA_TYPES = {
 
 function buildTableSchema(table, enums, refs) {
   const { name: entityName } = table;
+
+  // build entity-level attributes
   const entity = {
     name: entityName,
     model: `${entityName}Model`,
@@ -110,6 +114,8 @@ function buildTableSchema(table, enums, refs) {
     ],
     fields: [],
   };
+
+  // build fields and types
   const existingTypeNames = new Set();
   table.fields.forEach((rawField, index) => {
     const { name: fieldName, type } = rawField;
@@ -168,6 +174,7 @@ function buildTableSchema(table, enums, refs) {
       entity.fields.push(field);
     }
   });
+
   return entity;
 }
 
@@ -227,7 +234,7 @@ function merge(inputSchema, tableSchema, isVerbose) {
   return { name, model, ...extras, types, fields };
 }
 
-function reconcile(inputSchemas, tableSchemas, isVerbose) {
+function reconcile(inputSchemas, tableSchemas, config, isVerbose) {
   if (isVerbose) {
     console.log("[AIRENT-PRISMA/INFO] Reconciling schemas ...");
   }
@@ -246,31 +253,41 @@ function reconcile(inputSchemas, tableSchemas, isVerbose) {
       ? tableSchema
       : merge(inputSchema, tableSchema, isVerbose);
 
-    const entName = utils.toTitleCase(entity.name);
+    // add universal types and universal fields
+    const { prismaModelUniversalTypes, prismaModelUniversalFields } = config;
+    entity.types.push(...prismaModelUniversalTypes);
+    entity.fields.push(...prismaModelUniversalFields);
+
+    // build model definition
     const prismaAssociationFields = entity.fields
       .filter(utils.isAssociationField)
       .filter((t) => t.isPrisma);
-    const prismaModelAssociationsString = prismaAssociationFields
-      .map(
-        (f) =>
-          `${f.name}?: ${utils.toTitleCase(
-            utils.toPrimitiveTypeName(f.type)
-          )}Model${
-            utils.isArrayField(f)
-              ? "[]"
-              : utils.isNullableField(f)
-              ? " | null"
-              : ""
-          }`
-      )
-      .join("; ");
-    const modelDefinition = `Prisma${entName}${
+    const prismaModelAssociationDefinitions = prismaAssociationFields.map(
+      (f) =>
+        `${f.name}?: ${utils.toTitleCase(
+          utils.toPrimitiveTypeName(f.type)
+        )}Model${
+          utils.isArrayField(f)
+            ? "[]"
+            : utils.isNullableField(f)
+            ? " | null"
+            : ""
+        }`
+    );
+    const prismaModelAssociationDefinitionsString =
       prismaAssociationFields.length === 0
         ? ""
-        : ` & { ${prismaModelAssociationsString} }`
-    }`;
-    const modelType = { name: `${entName}Model`, define: modelDefinition };
-    entity.types.push(modelType);
+        : ` & { ${prismaModelAssociationDefinitions.join("; ")} }`;
+    const prismaModelUniversalFieldDefinitions = prismaModelUniversalFields.map(
+      (f) => `${f.name}: ${f.type}`
+    );
+    const prismaModelUniversalFieldDefinitionsString =
+      prismaModelUniversalFields.length === 0
+        ? ""
+        : ` & { ${prismaModelUniversalFieldDefinitions.join("; ")} }`;
+    const entName = utils.toTitleCase(entity.name);
+    const modelDefinition = `Prisma${entName}${prismaModelAssociationDefinitionsString}${prismaModelUniversalFieldDefinitionsString}`;
+    entity.types.push({ name: `${entName}Model`, define: modelDefinition });
 
     return entity;
   });
@@ -293,7 +310,12 @@ async function generate(argv) {
   const config = await loadConfig(isVerbose);
   const inputSchemas = await loadSchemas(config.schemaPath, isVerbose);
   const tableSchemas = await loadTableSchemas(isVerbose);
-  const outputSchemas = reconcile(inputSchemas, tableSchemas, isVerbose);
+  const outputSchemas = reconcile(
+    inputSchemas,
+    tableSchemas,
+    config,
+    isVerbose
+  );
 
   // Ensure the output directory exists
   await fs.promises.mkdir(config.outputPath, { recursive: true });

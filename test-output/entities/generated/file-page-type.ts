@@ -7,7 +7,9 @@ import { JsonValue as PrismaJsonValue } from '@prisma/client/runtime/library';
 
 /** structs */
 
-export type FilePageModel = PrismaFilePage & { file?: FileModel; chunks?: FilePageChunkModel[] };
+export type RequestContext = {};
+
+export type FilePageModel = PrismaFilePage & { file?: FileModel; chunks?: FilePageChunkModel[] } & { context: RequestContext };
 
 export type FilePageFieldRequest = {
   id?: boolean;
@@ -18,6 +20,7 @@ export type FilePageFieldRequest = {
   lines?: boolean;
   file?: FileFieldRequest;
   chunks?: FilePageChunkFieldRequest;
+  context?: boolean;
 };
 
 export type FilePageResponse = {
@@ -29,4 +32,5 @@ export type FilePageResponse = {
   lines?: PrismaJsonValue;
   file?: FileResponse;
   chunks?: FilePageChunkResponse[];
+  context?: RequestContext;
 };

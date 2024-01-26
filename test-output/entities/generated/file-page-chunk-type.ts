@@ -6,7 +6,9 @@ import { FilePageChunk as PrismaFilePageChunk } from '@prisma/client';
 
 /** structs */
 
-export type FilePageChunkModel = PrismaFilePageChunk & { file?: FileModel; page?: FilePageModel };
+export type RequestContext = {};
+
+export type FilePageChunkModel = PrismaFilePageChunk & { file?: FileModel; page?: FilePageModel } & { context: RequestContext };
 
 export type FilePageChunkFieldRequest = {
   id?: boolean;
@@ -19,6 +21,7 @@ export type FilePageChunkFieldRequest = {
   endLineId?: boolean;
   file?: FileFieldRequest;
   page?: FilePageFieldRequest;
+  context?: boolean;
 };
 
 export type FilePageChunkResponse = {
@@ -32,4 +35,5 @@ export type FilePageChunkResponse = {
   endLineId?: number;
   file?: FileResponse;
   page?: FilePageResponse;
+  context?: RequestContext;
 };

@@ -4,8 +4,10 @@ types:
   - name: PrismaFilePageChunk
     aliasOf: FilePageChunk
     import: '@prisma/client'
+  - name: RequestContext
+    define: '{}'
   - name: FilePageChunkModel
-    define: 'PrismaFilePageChunk & { file?: FileModel; page?: FilePageModel }'
+    define: 'PrismaFilePageChunk & { file?: FileModel; page?: FilePageModel } & { context: RequestContext }'
 fields:
   - id: 1
     name: id
@@ -67,3 +69,7 @@ fields:
       - fileId
       - pageId
     isPrisma: true
+  - id: 0
+    name: context
+    type: RequestContext
+    strategy: primitive

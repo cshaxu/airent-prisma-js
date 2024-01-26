@@ -7,16 +7,20 @@ import { FileType as PrismaFileType } from '@prisma/client';
 
 /** structs */
 
-export type FileModel = PrismaFile & { pages?: FilePageModel[]; chunks?: FilePageChunkModel[] };
+export type RequestContext = {};
+
+export type FileModel = PrismaFile & { pages?: FilePageModel[]; chunks?: FilePageChunkModel[] } & { context: RequestContext };
 
 export type FileFieldRequest = {
   createdAt?: boolean;
   size?: boolean;
   type?: boolean;
+  context?: boolean;
 };
 
 export type FileResponse = {
   createdAt?: Date;
   size?: number;
   type?: PrismaFileType;
+  context?: RequestContext;
 };

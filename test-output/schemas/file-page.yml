@@ -7,8 +7,10 @@ types:
   - name: PrismaJsonValue
     aliasOf: JsonValue
     import: '@prisma/client/runtime/library'
+  - name: RequestContext
+    define: '{}'
   - name: FilePageModel
-    define: 'PrismaFilePage & { file?: FileModel; chunks?: FilePageChunkModel[] }'
+    define: 'PrismaFilePage & { file?: FileModel; chunks?: FilePageChunkModel[] } & { context: RequestContext }'
 fields:
   - id: 1
     name: id
@@ -60,3 +62,7 @@ fields:
       - fileId
       - pageId
     isPrisma: true
+  - id: 0
+    name: context
+    type: RequestContext
+    strategy: primitive

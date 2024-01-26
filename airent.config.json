@@ -4,5 +4,19 @@
   "schemaPath": "test-output/schemas",
   "entityPath": "test-output/entities",
   "augmentors": ["resources/augmentor.js"],
-  "prismaImport": "import prisma from '@/lib/prisma';"
+  "prismaImport": "import prisma from '@/lib/prisma';",
+  "prismaModelUniversalFields": [
+    {
+      "id": 0,
+      "name": "context",
+      "type": "RequestContext",
+      "strategy": "primitive"
+    }
+  ],
+  "prismaModelUniversalTypes": [
+    {
+      "name": "RequestContext",
+      "define": "{}"
+    }
+  ]
 }
