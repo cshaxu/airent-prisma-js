@@ -1,5 +1,17 @@
 name: FilePageChunk
 model: FilePageChunkModel
+prisma:
+  tableFields:
+    - id
+    - createdAt
+    - updatedAt
+    - fileId
+    - pageId
+    - chunkId
+    - startLineId
+    - endLineId
+    - file
+    - page
 types:
   - name: PrismaFilePageChunk
     aliasOf: FilePageChunk

@@ -1,6 +1,15 @@
 name: File
 model: FileModel
 prisma:
+  tableFields:
+    - id
+    - createdAt
+    - size
+    - type
+    - pages
+    - chunks
+  skipFields:
+    - createdAt
   internalFields:
     - pages
     - chunks
@@ -16,11 +25,6 @@ types:
   - name: FileModel
     define: 'PrismaFile & { pages?: FilePageModel[]; chunks?: FilePageChunkModel[] } & { context: RequestContext }'
 fields:
-  - id: 2
-    name: createdAt
-    type: Date
-    strategy: primitive
-    isPrisma: true
   - id: 3
     name: size
     type: number

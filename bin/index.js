@@ -64,6 +64,10 @@ async function configure() {
       'Statement to import "prisma"',
       config.prismaImport ?? defaultPrismaImport
     );
+    config.prismaBatchSize = await askQuestion(
+      "Prisma batch size",
+      config.prismaBatchSize ?? "1000"
+    );
     augmentors.push(PRISMA_AUGMENTOR_PATH);
   } else if (!isPrismaAugmentorEnabled) {
     return;

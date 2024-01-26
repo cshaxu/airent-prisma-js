@@ -1,5 +1,15 @@
 name: FilePage
 model: FilePageModel
+prisma:
+  tableFields:
+    - id
+    - createdAt
+    - updatedAt
+    - fileId
+    - pageId
+    - lines
+    - file
+    - chunks
 types:
   - name: PrismaFilePage
     aliasOf: FilePage

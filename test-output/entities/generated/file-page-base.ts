@@ -97,7 +97,7 @@ export class FilePageEntityBase extends BaseEntity<
         }));
     },
     loader: async (keys: LoadKey[]) => {
-      const models = await batchLoad(prisma.file.findMany, keys).then((models) => models.map((m) => ({ ...m, context: this.context })));
+      const models = await batchLoad(prisma.file.findMany, keys, 1234).then((models) => models.map((m) => ({ ...m, context: this.context })));
       return FileEntity.fromArray(models);
     },
     setter: (sources: FilePageEntityBase[], targets: FileEntity[]) => {
@@ -135,7 +135,7 @@ export class FilePageEntityBase extends BaseEntity<
         }));
     },
     loader: async (keys: LoadKey[]) => {
-      const models = await batchLoad(prisma.filePageChunk.findMany, keys).then((models) => models.map((m) => ({ ...m, context: this.context })));
+      const models = await batchLoad(prisma.filePageChunk.findMany, keys, 1234).then((models) => models.map((m) => ({ ...m, context: this.context })));
       return FilePageChunkEntity.fromArray(models);
     },
     setter: (sources: FilePageEntityBase[], targets: FilePageChunkEntity[]) => {

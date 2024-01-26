@@ -34,7 +34,6 @@ import { FileType as PrismaFileType } from '@prisma/client';
 export class FileEntityBase extends BaseEntity<
   FileModel, FileFieldRequest, FileResponse
 > {
-  public createdAt: Date;
   public size: number;
   public type: PrismaFileType;
   public id: string;
@@ -51,7 +50,6 @@ export class FileEntityBase extends BaseEntity<
   ) {
     super(group, lock);
 
-    this.createdAt = model.createdAt;
     this.size = model.size;
     this.type = model.type;
     this.id = model.id;
@@ -62,7 +60,6 @@ export class FileEntityBase extends BaseEntity<
 
   public async present<S extends FileFieldRequest>(fieldRequest: S): Promise<Select<FileResponse, S>> {
     return {
-      ...(fieldRequest.createdAt !== undefined && { createdAt: this.createdAt }),
       ...(fieldRequest.size !== undefined && { size: this.size }),
       ...(fieldRequest.type !== undefined && { type: this.type }),
       ...(fieldRequest.context !== undefined && { context: this.context }),
@@ -88,7 +85,7 @@ export class FileEntityBase extends BaseEntity<
         }));
     },
     loader: async (keys: LoadKey[]) => {
-      const models = await batchLoad(prisma.filePage.findMany, keys).then((models) => models.map((m) => ({ ...m, context: this.context })));
+      const models = await batchLoad(prisma.filePage.findMany, keys, 1234).then((models) => models.map((m) => ({ ...m, context: this.context })));
       return FilePageEntity.fromArray(models);
     },
     setter: (sources: FileEntityBase[], targets: FilePageEntity[]) => {
@@ -125,7 +122,7 @@ export class FileEntityBase extends BaseEntity<
         }));
     },
     loader: async (keys: LoadKey[]) => {
-      const models = await batchLoad(prisma.filePageChunk.findMany, keys).then((models) => models.map((m) => ({ ...m, context: this.context })));
+      const models = await batchLoad(prisma.filePageChunk.findMany, keys, 1234).then((models) => models.map((m) => ({ ...m, context: this.context })));
       return FilePageChunkEntity.fromArray(models);
     },
     setter: (sources: FileEntityBase[], targets: FilePageChunkEntity[]) => {

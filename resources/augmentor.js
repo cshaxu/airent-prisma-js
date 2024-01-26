@@ -272,7 +272,9 @@ function buildModelsLoader(entity, config) /* Code */ {
     .join(", ");
   const universalFieldSettersString =
     universalFields.length === 0 ? "" : `, ${universalFieldSetters}`;
-  return `await batchLoad(prisma.${prismaModelName}.findMany, keys).then((models) => models.map((m) => ({ ...m${universalFieldSettersString} })))`;
+  const batchSizeString =
+    config.prismaBatchSize === undefined ? "" : `, ${config.prismaBatchSize}`;
+  return `await batchLoad(prisma.${prismaModelName}.findMany, keys${batchSizeString}).then((models) => models.map((m) => ({ ...m${universalFieldSettersString} })))`;
 }
 
 // function buildSelfLoaderLines(entity) /* Code */ {

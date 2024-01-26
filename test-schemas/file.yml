@@ -1,5 +1,7 @@
 name: File
 prisma:
+  skipFields:
+    - createdAt
   internalFields:
     - pages
     - chunks

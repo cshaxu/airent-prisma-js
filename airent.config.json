@@ -5,6 +5,7 @@
   "entityPath": "test-output/entities",
   "augmentors": ["resources/augmentor.js"],
   "prismaImport": "import prisma from '@/lib/prisma';",
+  "prismaBatchSize": 1234,
   "prismaModelUniversalFields": [
     {
       "id": 0,

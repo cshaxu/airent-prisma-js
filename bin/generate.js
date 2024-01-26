@@ -105,6 +105,7 @@ function buildTableSchema(table, enums, refs) {
   const entity = {
     name: entityName,
     model: `${entityName}Model`,
+    prisma: { tableFields: table.fields.map((f) => f.name) },
     types: [
       {
         name: `Prisma${entityName}`,
@@ -199,12 +200,34 @@ function merge(inputSchema, tableSchema, isVerbose) {
   if (isVerbose) {
     console.log(`[AIRENT-PRISMA/INFO] Merging schema ${tableSchema.name} ...`);
   }
-  const { name, model } = tableSchema;
+  const {
+    name,
+    model: tableModel,
+    prisma: tablePrisma,
+    types: tableTypesRaw,
+    fields: tableFieldsRaw,
+  } = tableSchema;
+  const {
+    name: _name,
+    model: inputModel,
+    prisma: inputPrismaRaw,
+    types: inputTypesRaw,
+    fields: inputFieldsRaw,
+    ...extras
+  } = inputSchema;
 
-  const inputFields = inputSchema.fields ?? [];
+  // bulid model
+  const model = inputModel ?? tableModel;
+
+  // build prisma
+  const inputPrisma = inputPrismaRaw ?? {};
+  const prisma = { ...tablePrisma, ...inputPrisma };
+
+  // build fields
+  const inputFields = inputFieldsRaw ?? [];
   const inputFieldNames = new Set(inputFields.map((f) => f.name));
-  const internalPrismaFields = inputSchema.prisma?.internalFields ?? [];
-  const tableFields = tableSchema.fields
+  const internalPrismaFields = inputPrisma?.internalFields ?? [];
+  const tableFields = tableFieldsRaw
     .map((f) => ({
       ...f,
       ...(internalPrismaFields.includes(f.name) && { internal: true }),
@@ -212,26 +235,17 @@ function merge(inputSchema, tableSchema, isVerbose) {
     .filter(
       (f) =>
         !inputFieldNames.has(f.name) &&
-        inputSchema.prisma?.skipFields?.includes(f.name) !== true
+        inputPrisma?.skipFields?.includes(f.name) !== true
     );
   const fields = [...tableFields, ...inputFields];
 
-  const inputTypes = inputSchema.types ?? [];
+  // build types
+  const inputTypes = inputTypesRaw ?? [];
   const inputTypeNames = new Set(inputTypes.map((t) => t.name));
-  const tableTypes = tableSchema.types.filter(
-    (f) => !inputTypeNames.has(f.name)
-  );
-
-  const {
-    name: _name,
-    model: _model,
-    types: _types,
-    fields: _fields,
-    ...extras
-  } = inputSchema;
-
+  const tableTypes = tableTypesRaw.filter((f) => !inputTypeNames.has(f.name));
   const types = [...tableTypes, ...inputTypes];
-  return { name, model, ...extras, types, fields };
+
+  return { name, model, prisma, ...extras, types, fields };
 }
 
 function reconcile(inputSchemas, tableSchemas, config, isVerbose) {
