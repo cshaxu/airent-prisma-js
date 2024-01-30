@@ -21,7 +21,7 @@ function getUniversalFields(entity, config) /* Field[] */ {
 function buildBeforeBase(entity, config) /* Code[] */ {
   const requiredImports = [
     `import { batchLoad } from '${
-      config.airentPrismaPackage ?? "airent-prisma"
+      config.airentPrismaPackage ?? "@airent/prisma"
     }';`,
   ];
   if (entity.isPrisma !== false) {

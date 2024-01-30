@@ -38,7 +38,7 @@ async function getShouldEnable(name, isEnabled) {
 
 const CONFIG_FILE_PATH = path.join(process.cwd(), "airent.config.json");
 
-const AIRENT_PRISMA_RESOURCES_PATH = "node_modules/airent-prisma/resources";
+const AIRENT_PRISMA_RESOURCES_PATH = "node_modules/@airent/prisma/resources";
 
 const PRISMA_AUGMENTOR_PATH = `${AIRENT_PRISMA_RESOURCES_PATH}/augmentor.js`;
 
@@ -82,7 +82,7 @@ async function configure() {
     config.extensionSchemaPath = config.schemaPath;
     config.schemaPath = "node_modules/.airent/schemas";
     console.log(
-      '[AIRENT-PRISMA/INFO] Please run "npx airent-prisma" before "npx airent" in the future.'
+      '[AIRENT-PRISMA/INFO] Please run "npx airent-prisma generate" before "npx airent" in the future.'
     );
   }
 
