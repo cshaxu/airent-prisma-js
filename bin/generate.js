@@ -267,6 +267,10 @@ function reconcile(inputSchemas, tableSchemas, config, isVerbose) {
       ? tableSchema
       : merge(inputSchema, tableSchema, isVerbose);
 
+    if (entity.isPrisma === false) {
+      return entity;
+    }
+
     // add universal types and universal fields
     const { prismaModelUniversalTypes, prismaModelUniversalFields } = config;
     entity.types.push(...prismaModelUniversalTypes);
