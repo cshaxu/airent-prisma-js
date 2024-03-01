@@ -8,7 +8,7 @@ import { FilePageChunk as PrismaFilePageChunk } from '@prisma/client';
 
 export type RequestContext = {};
 
-export type FilePageChunkModel = PrismaFilePageChunk & { file?: FileModel; page?: FilePageModel } & { context: RequestContext };
+export type FilePageChunkModel = PrismaFilePageChunk & { context: RequestContext } & { file?: FileModel; page?: FilePageModel };
 
 export type FilePageChunkFieldRequest = {
   id?: boolean;

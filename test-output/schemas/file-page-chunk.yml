@@ -19,7 +19,7 @@ types:
   - name: RequestContext
     define: '{}'
   - name: FilePageChunkModel
-    define: 'PrismaFilePageChunk & { file?: FileModel; page?: FilePageModel } & { context: RequestContext }'
+    define: 'PrismaFilePageChunk & { context: RequestContext } & { file?: FileModel; page?: FilePageModel }'
 fields:
   - id: 1
     name: id

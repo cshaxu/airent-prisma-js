@@ -267,16 +267,35 @@ function reconcile(inputSchemas, tableSchemas, config, isVerbose) {
       ? tableSchema
       : merge(inputSchema, tableSchema, isVerbose);
 
-    if (entity.isPrisma === false) {
-      return entity;
-    }
-
     // add universal types and universal fields
     const { prismaModelUniversalTypes, prismaModelUniversalFields } = config;
     entity.types.push(...prismaModelUniversalTypes);
     entity.fields.push(...prismaModelUniversalFields);
 
-    // build model definition
+    const prismaModelUniversalFieldDefinitions = prismaModelUniversalFields.map(
+      (f) => `${f.name}: ${f.type}`
+    );
+    const prismaModelUniversalFieldDefinitionsString =
+      prismaModelUniversalFields.length === 0
+        ? ""
+        : ` & { ${prismaModelUniversalFieldDefinitions.join("; ")} }`;
+
+    const entName = utils.toTitleCase(entity.name);
+    const primitiveModelDefinition =
+      entity.isPrisma === false ? entity.model : `Prisma${entName}`;
+    const modelDefinitionWithUniversalFields = `${primitiveModelDefinition}${prismaModelUniversalFieldDefinitionsString}`;
+    const modelName = `${entName}Model`;
+
+    if (entity.isPrisma === false) {
+      entity.types.push({
+        name: modelName,
+        define: modelDefinitionWithUniversalFields,
+      });
+      entity.model = modelName;
+      return entity;
+    }
+
+    // build prisma model definition
     const prismaAssociationFields = entity.fields
       .filter(utils.isAssociationField)
       .filter((t) => t.isPrisma);
@@ -296,17 +315,11 @@ function reconcile(inputSchemas, tableSchemas, config, isVerbose) {
       prismaAssociationFields.length === 0
         ? ""
         : ` & { ${prismaModelAssociationDefinitions.join("; ")} }`;
-    const prismaModelUniversalFieldDefinitions = prismaModelUniversalFields.map(
-      (f) => `${f.name}: ${f.type}`
-    );
-    const prismaModelUniversalFieldDefinitionsString =
-      prismaModelUniversalFields.length === 0
-        ? ""
-        : ` & { ${prismaModelUniversalFieldDefinitions.join("; ")} }`;
-    const entName = utils.toTitleCase(entity.name);
-    const modelDefinition = `Prisma${entName}${prismaModelAssociationDefinitionsString}${prismaModelUniversalFieldDefinitionsString}`;
-    entity.types.push({ name: `${entName}Model`, define: modelDefinition });
-
+    const modelDefinitionWithAssociationFields = `${modelDefinitionWithUniversalFields}${prismaModelAssociationDefinitionsString}`;
+    entity.types.push({
+      name: modelName,
+      define: modelDefinitionWithAssociationFields,
+    });
     return entity;
   });
 }

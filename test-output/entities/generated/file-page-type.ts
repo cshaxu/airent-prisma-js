@@ -9,7 +9,7 @@ import { JsonValue as PrismaJsonValue } from '@prisma/client/runtime/library';
 
 export type RequestContext = {};
 
-export type FilePageModel = PrismaFilePage & { file?: FileModel; chunks?: FilePageChunkModel[] } & { context: RequestContext };
+export type FilePageModel = PrismaFilePage & { context: RequestContext } & { file?: FileModel; chunks?: FilePageChunkModel[] };
 
 export type FilePageFieldRequest = {
   id?: boolean;

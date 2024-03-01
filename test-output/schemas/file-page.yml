@@ -20,7 +20,7 @@ types:
   - name: RequestContext
     define: '{}'
   - name: FilePageModel
-    define: 'PrismaFilePage & { file?: FileModel; chunks?: FilePageChunkModel[] } & { context: RequestContext }'
+    define: 'PrismaFilePage & { context: RequestContext } & { file?: FileModel; chunks?: FilePageChunkModel[] }'
 fields:
   - id: 1
     name: id

@@ -9,7 +9,7 @@ import { FileType as PrismaFileType } from '@prisma/client';
 
 export type RequestContext = {};
 
-export type FileModel = PrismaFile & { pages?: FilePageModel[]; chunks?: FilePageChunkModel[] } & { context: RequestContext };
+export type FileModel = PrismaFile & { context: RequestContext } & { pages?: FilePageModel[]; chunks?: FilePageChunkModel[] };
 
 export type FileFieldRequest = {
   size?: boolean;
