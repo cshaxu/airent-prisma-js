@@ -67,7 +67,7 @@ function buildPrismaMethodSignatureLines(
     prismaMethod
   )}Args`;
   const universalFieldLines = getUniversalFields(entity, config).map(
-    (af) => `  ${af.name}: ${af.type},`
+    (uf) => `  ${uf.name}: ${uf.type},`
   );
   return [
     "",
@@ -101,7 +101,7 @@ function buildPrismaManyMethodLines(entity, config, prismaMethod) /* Code[] */ {
   }
 
   const universalFieldNameList = universalFields
-    .map((af) => af.name)
+    .map((uf) => uf.name)
     .join(", ");
   return [
     ...beforeLines,
@@ -141,7 +141,7 @@ function buildPrismaOneMethodLines(
   }
 
   const universalFieldNameList = universalFields
-    .map((af) => af.name)
+    .map((uf) => uf.name)
     .join(", ");
   return [
     ...beforeLines,
@@ -178,8 +178,8 @@ function buildPrismaPassThruMethodLines(entity, prismaMethod) /* Code[] */ {
 function buildInitializeMethodLines(entity, config) /* Code[] */ {
   const universalFields = getUniversalFields(entity, config);
   const universalFieldSetters = universalFields
-    .map((af) => af.name)
-    .map((afn) => `${afn}: this.${afn}`)
+    .map((uf) => uf.name)
+    .map((ufn) => `${ufn}: this.${ufn}`)
     .join(", ");
   const universalFieldSettersString =
     universalFields.length === 0 ? "" : `, ${universalFieldSetters}`;
@@ -267,8 +267,8 @@ function buildModelsLoader(entity, config) /* Code */ {
   const prismaModelName = utils.toCamelCase(entName);
   const universalFields = getUniversalFields(entity, config);
   const universalFieldSetters = universalFields
-    .map((af) => af.name)
-    .map((afn) => `${afn}: this.${afn}`)
+    .map((uf) => uf.name)
+    .map((ufn) => `${ufn}: this.${ufn}`)
     .join(", ");
   const universalFieldSettersString =
     universalFields.length === 0 ? "" : `, ${universalFieldSetters}`;
@@ -292,14 +292,14 @@ function buildModelsLoader(entity, config) /* Code */ {
 //   }
 //
 //   const { entityClass } = entity.strings;
-//   const universalFieldLines = universalFields.map((af) => [
-//     `const { ${af.name} } = keys[0];`,
-//     `if (${af.name} === undefined) {`,
-//     `  throw new Error('${entityClass}: ${af.name} is undefined');`,
+//   const universalFieldLines = universalFields.map((uf) => [
+//     `const { ${uf.name} } = keys[0];`,
+//     `if (${uf.name} === undefined) {`,
+//     `  throw new Error('${entityClass}: ${uf.name} is undefined');`,
 //     `}`,
 //   ]);
 //   const universalFieldNameList = universalFields
-//     .map((af) => af.name)
+//     .map((uf) => uf.name)
 //     .join(", ");
 //   const keysOmitterLines = [
 //     `keys = keys.map(({ ${universalFieldNameList}, ...rest }) => rest);`,
@@ -318,32 +318,23 @@ function buildModelsLoader(entity, config) /* Code */ {
 
 function buildLoadConfigSetterLines(config, field) /* Code[] */ {
   const universalFields = getUniversalFields(field._type._entity, config);
-  const universalFieldInitializeLines = universalFields.length
-    ? [
-        "targets.forEach((one) => {",
-        ...universalFields.map((af) => `  one.${af.name} = this.${af.name};`),
-        "});",
-      ]
-    : [];
   const mapper = field.code.loadConfig.targetMapper;
   const setter = field.code.loadConfig.sourceSetter;
   const mapperLine = `const map = ${mapper};`;
   if (!utils.isEntityTypeField(field)) {
     return [
-      ...universalFieldInitializeLines,
       mapperLine,
       `sources.forEach((one) => (one.${field.name} = ${setter}));`,
     ];
   }
-  const universalFieldUpdateLines = universalFields.map((af) => [
+  const universalFieldUpdateLines = universalFields.map((uf) => [
     utils.isArrayField(field)
-      ? `  one.${field.name}.forEach((e) => (e.${af.name} = one.${af.name}));`
+      ? `  one.${field.name}.forEach((e) => (e.${uf.name} = one.${uf.name}));`
       : utils.isNullableField(field)
-      ? `  if (one.${field.name} !== null) { one.${field.name}.${af.name} = one.${af.name}; }`
-      : `  one.${field.name}.${af.name} = one.${af.name};`,
+      ? `  if (one.${field.name} !== null) { one.${field.name}.${uf.name} = one.${uf.name}; }`
+      : `  one.${field.name}.${uf.name} = one.${uf.name};`,
   ]);
   return [
-    ...universalFieldInitializeLines,
     mapperLine,
     `sources.forEach((one) => {`,
     `  one.${field.name} = ${setter};`,

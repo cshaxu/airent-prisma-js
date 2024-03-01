@@ -56,19 +56,19 @@ fields:
     name: file
     type: File
     strategy: association
-    sourceFields:
+    sourceKeys:
       - fileId
-    targetFields:
+    targetKeys:
       - id
     isPrisma: true
   - id: 8
     name: chunks
     type: FilePageChunk[]
     strategy: association
-    sourceFields:
+    sourceKeys:
       - fileId
       - pageId
-    targetFields:
+    targetKeys:
       - fileId
       - pageId
     isPrisma: true

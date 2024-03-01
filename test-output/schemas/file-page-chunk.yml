@@ -65,19 +65,19 @@ fields:
     name: file
     type: File
     strategy: association
-    sourceFields:
+    sourceKeys:
       - fileId
-    targetFields:
+    targetKeys:
       - id
     isPrisma: true
   - id: 10
     name: page
     type: FilePage
     strategy: association
-    sourceFields:
+    sourceKeys:
       - fileId
       - pageId
-    targetFields:
+    targetKeys:
       - fileId
       - pageId
     isPrisma: true

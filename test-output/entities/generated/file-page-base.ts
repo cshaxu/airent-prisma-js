@@ -101,12 +101,9 @@ export class FilePageEntityBase extends BaseEntity<
       return FileEntity.fromArray(models);
     },
     setter: (sources: FilePageEntityBase[], targets: FileEntity[]) => {
-      targets.forEach((one) => {
-        one.context = this.context;
-      });
-      const map = toObjectMap(targets, (one) => `${one.id}`, (one) => one);
+      const map = toObjectMap(targets, (one) => JSON.stringify({ id: one.id }), (one) => one);
       sources.forEach((one) => {
-        one.file = map.get(`${one.fileId}`)!;
+        one.file = map.get(JSON.stringify({ id: one.fileId }))!;
         one.file.context = one.context;
       });
     },
@@ -139,12 +136,9 @@ export class FilePageEntityBase extends BaseEntity<
       return FilePageChunkEntity.fromArray(models);
     },
     setter: (sources: FilePageEntityBase[], targets: FilePageChunkEntity[]) => {
-      targets.forEach((one) => {
-        one.context = this.context;
-      });
-      const map = toArrayMap(targets, (one) => `${one.fileId}*${one.pageId}`, (one) => one);
+      const map = toArrayMap(targets, (one) => JSON.stringify({ fileId: one.fileId, pageId: one.pageId }), (one) => one);
       sources.forEach((one) => {
-        one.chunks = map.get(`${one.fileId}*${one.pageId}`) ?? [];
+        one.chunks = map.get(JSON.stringify({ fileId: one.fileId, pageId: one.pageId })) ?? [];
         one.chunks.forEach((e) => (e.context = one.context));
       });
     },

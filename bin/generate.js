@@ -166,8 +166,8 @@ function buildTableSchema(table, enums, refs) {
           field.type = `${targetTable}${typeSuffix}`;
         }
         field.strategy = "association";
-        field.sourceFields = source.fields;
-        field.targetFields = target.fields;
+        field.sourceKeys = source.fields;
+        field.targetKeys = target.fields;
       }
     }
     if (field.type) {

@@ -39,9 +39,9 @@ fields:
     name: pages
     type: FilePage[]
     strategy: association
-    sourceFields:
+    sourceKeys:
       - id
-    targetFields:
+    targetKeys:
       - fileId
     isPrisma: true
     internal: true
@@ -49,9 +49,9 @@ fields:
     name: chunks
     type: FilePageChunk[]
     strategy: association
-    sourceFields:
+    sourceKeys:
       - id
-    targetFields:
+    targetKeys:
       - fileId
     isPrisma: true
     internal: true
