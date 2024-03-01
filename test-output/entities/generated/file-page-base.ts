@@ -1,4 +1,4 @@
-import { batchLoad } from '../../../src';
+import { batchLoad, batchLoadTopMany } from '../../../src';
 import { Prisma } from '@prisma/client';
 import prisma from '@/lib/prisma';
 import { FileModel } from './file-type';

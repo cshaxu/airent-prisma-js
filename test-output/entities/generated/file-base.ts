@@ -1,4 +1,4 @@
-import { batchLoad } from '../../../src';
+import { batchLoad, batchLoadTopMany } from '../../../src';
 import { Prisma } from '@prisma/client';
 import prisma from '@/lib/prisma';
 import { FilePageModel } from './file-page-type';
@@ -62,6 +62,7 @@ export class FileEntityBase extends BaseEntity<
     return {
       ...(fieldRequest.size !== undefined && { size: this.size }),
       ...(fieldRequest.type !== undefined && { type: this.type }),
+      ...(fieldRequest.chunks !== undefined && { chunks: await this.getChunks().then((a) => Promise.all(a.map((one) => one.present(fieldRequest.chunks!)))) }),
       ...(fieldRequest.context !== undefined && { context: this.context }),
     } as Select<FileResponse, S>;
   }
@@ -119,7 +120,7 @@ export class FileEntityBase extends BaseEntity<
         }));
     },
     loader: async (keys: LoadKey[]) => {
-      const models = await batchLoad(prisma.filePageChunk.findMany, keys, 1234).then((models) => models.map((m) => ({ ...m, context: this.context })));
+      const models = await batchLoadTopMany((query) => prisma.filePageChunk.findMany({ ...query, orderBy: { pageId: 'asc', chunkId: 'desc' } }), (key, entity) => key.fileId === entity.fileId, keys, 10, 1234).then((models) => models.map((m) => ({ ...m, context: this.context })));
       return FilePageChunkEntity.fromArray(models);
     },
     setter: (sources: FileEntityBase[], targets: FilePageChunkEntity[]) => {

@@ -2,29 +2,78 @@ import { omit } from "lodash";
 
 type LoadKey = Record<string, any>;
 
-async function batchLoad<T>(
-  executor: (query: any) => Promise<T[]>,
+const DEFAULT_BATCH_SIZE = 1000;
+
+async function batchLoad<ENTITY>(
+  loader: (query: any) => Promise<ENTITY[]>,
   keys: LoadKey[],
-  limit: number = 1000
-): Promise<T[]> {
+  batchSize: number = DEFAULT_BATCH_SIZE
+): Promise<ENTITY[]> {
   if (keys.length === 0) {
     return [];
   }
-  const array = new Array<T>();
+  const result: ENTITY[] = [];
   const where = buildWhere(keys);
   let offset = 0;
-  let batchSize = 0;
+  let batch: ENTITY[] = [];
   do {
-    const query = { where, skip: offset, take: limit };
-    const batch = await executor(query);
-    array.push(...batch);
-    batchSize = batch.length;
-    offset += batchSize;
-  } while (batchSize === limit);
-  return array;
+    const query = { where, skip: offset, take: batchSize };
+    batch = await loader(query);
+    result.push(...batch);
+    offset += batch.length;
+  } while (batch.length === batchSize);
+  return result;
 }
 
-function buildWhere(loadKeys: LoadKey[]): LoadKey {
+async function batchLoadTopMany<ENTITY>(
+  loader: (query: any) => Promise<ENTITY[]>,
+  matcher: (key: LoadKey, entity: ENTITY) => boolean,
+  keys: LoadKey[],
+  topSize: number,
+  batchSize: number = DEFAULT_BATCH_SIZE
+): Promise<ENTITY[]> {
+  const result: ENTITY[] = [];
+  if (keys.length === 0) {
+    return result;
+  }
+  const { OR, ...otherConditions } = buildWhere(keys, false);
+  const counter = new Map<LoadKey, number>();
+  let remainingKeys: LoadKey[] = OR ?? [{}];
+  let batch: ENTITY[] = [];
+  do {
+    const offset = remainingKeys.reduce(
+      (count, key) => count + (counter.get(key) ?? 0),
+      0
+    );
+    const query = {
+      where: { OR: remainingKeys, ...otherConditions },
+      skip: offset,
+      take: batchSize,
+    };
+    batch = await loader(query);
+    const nextRemainingKeys: LoadKey[] = [];
+    for (const entity of batch) {
+      for (const key of remainingKeys) {
+        if (matcher(key, entity)) {
+          const count = counter.get(key) ?? 0;
+          if (count < topSize) {
+            result.push(entity);
+            counter.set(key, count + 1);
+            break;
+          }
+        }
+        const count = counter.get(key) ?? 0;
+        if (count < topSize) {
+          nextRemainingKeys.push(key);
+        }
+      }
+    }
+    remainingKeys = nextRemainingKeys;
+  } while (remainingKeys.length > 0 && batch.length === batchSize);
+  return result;
+}
+
+function buildWhere(loadKeys: LoadKey[], allowIn: boolean = true): LoadKey {
   if (loadKeys.length === 0) {
     return {};
   }
@@ -51,7 +100,7 @@ function buildWhere(loadKeys: LoadKey[]): LoadKey {
   if (multiKeys.length === 0) {
     return where;
   }
-  if (multiKeys.length === 1) {
+  if (allowIn && multiKeys.length === 1) {
     where[multiKeys[0]] = { in: map[multiKeys[0]] };
     return where;
   }
@@ -59,4 +108,4 @@ function buildWhere(loadKeys: LoadKey[]): LoadKey {
   return where;
 }
 
-export { batchLoad, buildWhere };
+export { batchLoad, batchLoadTopMany, buildWhere };

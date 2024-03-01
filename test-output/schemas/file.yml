@@ -12,7 +12,6 @@ prisma:
     - createdAt
   internalFields:
     - pages
-    - chunks
 types:
   - name: PrismaFile
     aliasOf: File
@@ -45,7 +44,12 @@ fields:
       - fileId
     isPrisma: true
     internal: true
-  - id: 6
+  - id: 1
+    name: id
+    type: string
+    internal: true
+    strategy: primitive
+  - id: 2
     name: chunks
     type: FilePageChunk[]
     strategy: association
@@ -54,12 +58,10 @@ fields:
     targetKeys:
       - fileId
     isPrisma: true
-    internal: true
-  - id: 1
-    name: id
-    type: string
-    internal: true
-    strategy: primitive
+    orderBy:
+      - pageId: asc
+      - chunkId: desc
+    take: 10
   - id: 0
     name: context
     type: RequestContext

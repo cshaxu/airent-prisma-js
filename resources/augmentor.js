@@ -9,6 +9,8 @@ const utils = require("airent/resources/utils.js");
  * - isPrisma: false | undefined, top-level flag, false to skip generating prisma wrappers
  * - isPrisma: boolean | undefined, field-level flag to note field as prisma generated field
  * - prismaLoader: boolean | undefined, field-level flag to decide whether to generate loader for the field
+ * - orderBy: object | undefined, association-field-level key to specify orderBy for the field loader
+ * - take: number | undefined, association-field-level key to specify limit on the field
  */
 
 function getUniversalFields(entity, config) /* Field[] */ {
@@ -20,7 +22,7 @@ function getUniversalFields(entity, config) /* Field[] */ {
 
 function buildBeforeBase(entity, config) /* Code[] */ {
   const requiredImports = [
-    `import { batchLoad } from '${
+    `import { batchLoad, batchLoadTopMany } from '${
       config.airentPrismaPackage ?? "@airent/prisma"
     }';`,
   ];
@@ -262,9 +264,31 @@ function buildIsLoaderGeneratable(field) /* boolean */ {
   return otherEntity !== undefined && otherEntity.isPrisma !== false;
 }
 
-function buildModelsLoader(entity, config) /* Code */ {
+function buildAssociationFieldModelsLoader(field, config) /* Code */ {
+  const batch = field.take ? "batchLoadTopMany" : "batchLoad";
+
+  const entity = field._type._entity;
+
   const entName = utils.toTitleCase(entity.name);
   const prismaModelName = utils.toCamelCase(entName);
+  const loader = field.orderBy?.length
+    ? `(query) => prisma.${prismaModelName}.findMany({ ...query, orderBy: { ${field.orderBy
+        .flatMap((item) => Object.keys(item).map((k) => `${k}: '${item[k]}'`))
+        .join(", ")} } })`
+    : `prisma.${prismaModelName}.findMany`;
+
+  const targetFields = utils.getTargetFields(field);
+  const matcher = field.take
+    ? `, (key, entity) => ${targetFields
+        .map((tf) => `key.${tf.aliasOf ?? tf.name} === entity.${tf.name}`)
+        .join(" && ")}`
+    : "";
+
+  const topSize = field.take ? `, ${field.take}` : "";
+
+  const batchSize =
+    config.prismaBatchSize === undefined ? "" : `, ${config.prismaBatchSize}`;
+
   const universalFields = getUniversalFields(entity, config);
   const universalFieldSetters = universalFields
     .map((uf) => uf.name)
@@ -272,49 +296,9 @@ function buildModelsLoader(entity, config) /* Code */ {
     .join(", ");
   const universalFieldSettersString =
     universalFields.length === 0 ? "" : `, ${universalFieldSetters}`;
-  const batchSizeString =
-    config.prismaBatchSize === undefined ? "" : `, ${config.prismaBatchSize}`;
-  return `await batchLoad(prisma.${prismaModelName}.findMany, keys${batchSizeString}).then((models) => models.map((m) => ({ ...m${universalFieldSettersString} })))`;
-}
 
-// function buildSelfLoaderLines(entity) /* Code */ {
-//   const beforeLine = `if (keys.length === 0) { return []; }`;
-//   const afterLine = `return (this as any).fromArray(loadedModels);`;
-//   const selfModelsLoader =
-//     entity.isPrisma === false
-//       ? "[/* Please add `skipSelfLoader: true` in entity yaml */]"
-//       : buildModelsLoader(utils.toTitleCase(entity.name));
-//
-//   const universalFields = getUniversalFields(entity);
-//   if (universalFields.length === 0) {
-//     const loadedModelsLine = `const loadedModels = ${selfModelsLoader};`;
-//     return [beforeLine, loadedModelsLine, afterLine];
-//   }
-//
-//   const { entityClass } = entity.strings;
-//   const universalFieldLines = universalFields.map((uf) => [
-//     `const { ${uf.name} } = keys[0];`,
-//     `if (${uf.name} === undefined) {`,
-//     `  throw new Error('${entityClass}: ${uf.name} is undefined');`,
-//     `}`,
-//   ]);
-//   const universalFieldNameList = universalFields
-//     .map((uf) => uf.name)
-//     .join(", ");
-//   const keysOmitterLines = [
-//     `keys = keys.map(({ ${universalFieldNameList}, ...rest }) => rest);`,
-//   ];
-//   const prismaModelsLine = `const prismaModels = ${selfModelsLoader};`;
-//   const loadedModelsLine = `const loadedModels = prismaModels.map((pm) => ({ ...pm, ${universalFieldNameList} }));`;
-//   return [
-//     beforeLine,
-//     ...universalFieldLines.flat(),
-//     ...keysOmitterLines.flat(),
-//     prismaModelsLine,
-//     loadedModelsLine,
-//     afterLine,
-//   ];
-// }
+  return `await ${batch}(${loader}${matcher}, keys${topSize}${batchSize}).then((models) => models.map((m) => ({ ...m${universalFieldSettersString} })))`;
+}
 
 function buildLoadConfigSetterLines(config, field) /* Code[] */ {
   const universalFields = getUniversalFields(field._type._entity, config);
@@ -355,13 +339,12 @@ function augmentOne(entity, config, isVerbose) /* void */ {
   entity.code.insideBase.push(...prismaInsideBase);
   entity.code.beforeType.push(...prismaBeforeType);
   entity.skipSelfLoader = true;
-  // entity.code.selfLoaderLines = buildSelfLoaderLines(entity);
   entity.fields.filter(utils.isAssociationField).forEach((field) => {
     const { loadConfig } = field.code;
     const isLoaderGeneratable = buildIsLoaderGeneratable(field);
     loadConfig.isLoaderGeneratable = isLoaderGeneratable;
     loadConfig.targetModelsLoader = isLoaderGeneratable
-      ? buildModelsLoader(field._type._entity, config)
+      ? buildAssociationFieldModelsLoader(field, config)
       : "[/* TODO: load associated models */]";
     loadConfig.setterLines = buildLoadConfigSetterLines(config, field);
   });

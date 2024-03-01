@@ -1,4 +1,5 @@
 type LoadKey = Record<string, any>;
-declare function batchLoad<T>(executor: (query: any) => Promise<T[]>, keys: LoadKey[], limit?: number): Promise<T[]>;
-declare function buildWhere(loadKeys: LoadKey[]): LoadKey;
-export { batchLoad, buildWhere };
+declare function batchLoad<ENTITY>(loader: (query: any) => Promise<ENTITY[]>, keys: LoadKey[], batchSize?: number): Promise<ENTITY[]>;
+declare function batchLoadTopMany<ENTITY>(loader: (query: any) => Promise<ENTITY[]>, matcher: (key: LoadKey, entity: ENTITY) => boolean, keys: LoadKey[], topSize: number, batchSize?: number): Promise<ENTITY[]>;
+declare function buildWhere(loadKeys: LoadKey[], allowIn?: boolean): LoadKey;
+export { batchLoad, batchLoadTopMany, buildWhere };

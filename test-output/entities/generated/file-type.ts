@@ -14,11 +14,13 @@ export type FileModel = PrismaFile & { pages?: FilePageModel[]; chunks?: FilePag
 export type FileFieldRequest = {
   size?: boolean;
   type?: boolean;
+  chunks?: FilePageChunkFieldRequest;
   context?: boolean;
 };
 
 export type FileResponse = {
   size?: number;
   type?: PrismaFileType;
+  chunks?: FilePageChunkResponse[];
   context?: RequestContext;
 };
