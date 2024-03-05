@@ -1,4 +1,4 @@
-import { batchLoad, batchLoadTopMany } from '../../../src';
+import { ValidatePrismaArgs, batchLoad, batchLoadTopMany } from '../../../src';
 import { Prisma } from '@prisma/client';
 import prisma from '@/lib/prisma';
 import { FileModel } from './file-type';
@@ -172,10 +172,10 @@ export class FilePageEntityBase extends BaseEntity<
     T extends Prisma.FilePageFindManyArgs,
   >(
     this: EntityConstructor<FilePageModel, ENTITY>,
-    args: Prisma.SelectSubset<T, Prisma.FilePageFindManyArgs>,
+    args: ValidatePrismaArgs<T, Prisma.FilePageFindManyArgs>,
     context: RequestContext,
   ): Promise<ENTITY[]> {
-    const prismaModels = await prisma.filePage.findMany(args);
+    const prismaModels = await prisma.filePage.findMany(args as unknown as Prisma.SelectSubset<T, Prisma.FilePageFindManyArgs>);
     const models = prismaModels.map((pm) => ({ ...pm, context }));
     return (this as any).fromArray(models);
   }
@@ -185,10 +185,10 @@ export class FilePageEntityBase extends BaseEntity<
     T extends Prisma.FilePageFindUniqueArgs,
   >(
     this: EntityConstructor<FilePageModel, ENTITY>,
-    args: Prisma.SelectSubset<T, Prisma.FilePageFindUniqueArgs>,
+    args: ValidatePrismaArgs<T, Prisma.FilePageFindUniqueArgs>,
     context: RequestContext,
   ): Promise<ENTITY | null> {
-    const prismaModel = await prisma.filePage.findUnique(args);
+    const prismaModel = await prisma.filePage.findUnique(args as unknown as Prisma.SelectSubset<T, Prisma.FilePageFindUniqueArgs>);
     if (prismaModel === null) {
       return null;
     }
@@ -201,10 +201,10 @@ export class FilePageEntityBase extends BaseEntity<
     T extends Prisma.FilePageFindFirstArgs,
   >(
     this: EntityConstructor<FilePageModel, ENTITY>,
-    args: Prisma.SelectSubset<T, Prisma.FilePageFindFirstArgs>,
+    args: ValidatePrismaArgs<T, Prisma.FilePageFindFirstArgs>,
     context: RequestContext,
   ): Promise<ENTITY | null> {
-    const prismaModel = await prisma.filePage.findFirst(args);
+    const prismaModel = await prisma.filePage.findFirst(args as unknown as Prisma.SelectSubset<T, Prisma.FilePageFindFirstArgs>);
     if (prismaModel === null) {
       return null;
     }
@@ -217,10 +217,10 @@ export class FilePageEntityBase extends BaseEntity<
     T extends Prisma.FilePageFindUniqueOrThrowArgs,
   >(
     this: EntityConstructor<FilePageModel, ENTITY>,
-    args: Prisma.SelectSubset<T, Prisma.FilePageFindUniqueOrThrowArgs>,
+    args: ValidatePrismaArgs<T, Prisma.FilePageFindUniqueOrThrowArgs>,
     context: RequestContext,
   ): Promise<ENTITY> {
-    const prismaModel = await prisma.filePage.findUniqueOrThrow(args);
+    const prismaModel = await prisma.filePage.findUniqueOrThrow(args as unknown as Prisma.SelectSubset<T, Prisma.FilePageFindUniqueOrThrowArgs>);
     const model = { ...prismaModel, context };
     return (this as any).fromOne(model);
   }
@@ -230,10 +230,10 @@ export class FilePageEntityBase extends BaseEntity<
     T extends Prisma.FilePageFindFirstOrThrowArgs,
   >(
     this: EntityConstructor<FilePageModel, ENTITY>,
-    args: Prisma.SelectSubset<T, Prisma.FilePageFindFirstOrThrowArgs>,
+    args: ValidatePrismaArgs<T, Prisma.FilePageFindFirstOrThrowArgs>,
     context: RequestContext,
   ): Promise<ENTITY> {
-    const prismaModel = await prisma.filePage.findFirstOrThrow(args);
+    const prismaModel = await prisma.filePage.findFirstOrThrow(args as unknown as Prisma.SelectSubset<T, Prisma.FilePageFindFirstOrThrowArgs>);
     const model = { ...prismaModel, context };
     return (this as any).fromOne(model);
   }
@@ -243,10 +243,10 @@ export class FilePageEntityBase extends BaseEntity<
     T extends Prisma.FilePageUpsertArgs,
   >(
     this: EntityConstructor<FilePageModel, ENTITY>,
-    args: Prisma.SelectSubset<T, Prisma.FilePageUpsertArgs>,
+    args: ValidatePrismaArgs<T, Prisma.FilePageUpsertArgs>,
     context: RequestContext,
   ): Promise<ENTITY> {
-    const prismaModel = await prisma.filePage.upsert(args);
+    const prismaModel = await prisma.filePage.upsert(args as unknown as Prisma.SelectSubset<T, Prisma.FilePageUpsertArgs>);
     const model = { ...prismaModel, context };
     return (this as any).fromOne(model);
   }
@@ -256,10 +256,10 @@ export class FilePageEntityBase extends BaseEntity<
     T extends Prisma.FilePageCreateArgs,
   >(
     this: EntityConstructor<FilePageModel, ENTITY>,
-    args: Prisma.SelectSubset<T, Prisma.FilePageCreateArgs>,
+    args: ValidatePrismaArgs<T, Prisma.FilePageCreateArgs>,
     context: RequestContext,
   ): Promise<ENTITY> {
-    const prismaModel = await prisma.filePage.create(args);
+    const prismaModel = await prisma.filePage.create(args as unknown as Prisma.SelectSubset<T, Prisma.FilePageCreateArgs>);
     const model = { ...prismaModel, context };
     return (this as any).fromOne(model);
   }
@@ -269,10 +269,10 @@ export class FilePageEntityBase extends BaseEntity<
     T extends Prisma.FilePageUpdateArgs,
   >(
     this: EntityConstructor<FilePageModel, ENTITY>,
-    args: Prisma.SelectSubset<T, Prisma.FilePageUpdateArgs>,
+    args: ValidatePrismaArgs<T, Prisma.FilePageUpdateArgs>,
     context: RequestContext,
   ): Promise<ENTITY> {
-    const prismaModel = await prisma.filePage.update(args);
+    const prismaModel = await prisma.filePage.update(args as unknown as Prisma.SelectSubset<T, Prisma.FilePageUpdateArgs>);
     const model = { ...prismaModel, context };
     return (this as any).fromOne(model);
   }
@@ -282,10 +282,10 @@ export class FilePageEntityBase extends BaseEntity<
     T extends Prisma.FilePageDeleteArgs,
   >(
     this: EntityConstructor<FilePageModel, ENTITY>,
-    args: Prisma.SelectSubset<T, Prisma.FilePageDeleteArgs>,
+    args: ValidatePrismaArgs<T, Prisma.FilePageDeleteArgs>,
     context: RequestContext,
   ): Promise<ENTITY> {
-    const prismaModel = await prisma.filePage.delete(args);
+    const prismaModel = await prisma.filePage.delete(args as unknown as Prisma.SelectSubset<T, Prisma.FilePageDeleteArgs>);
     const model = { ...prismaModel, context };
     return (this as any).fromOne(model);
   }

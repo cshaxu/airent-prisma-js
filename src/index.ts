@@ -4,6 +4,12 @@ type LoadKey = Record<string, any>;
 
 const DEFAULT_BATCH_SIZE = 1000;
 
+type ValidatePrismaArgs<T, U> = {
+  [key in keyof T]: key extends keyof U ? T[key] : never;
+} & (T extends { select: any }
+  ? "Property `select` not supported by @airent/prisma."
+  : {});
+
 async function batchLoad<ENTITY>(
   loader: (query: any) => Promise<ENTITY[]>,
   keys: LoadKey[],
@@ -108,4 +114,4 @@ function buildWhere(loadKeys: LoadKey[], allowIn: boolean = true): LoadKey {
   return where;
 }
 
-export { batchLoad, batchLoadTopMany, buildWhere };
+export { ValidatePrismaArgs, batchLoad, batchLoadTopMany, buildWhere };

@@ -22,7 +22,7 @@ function getUniversalFields(entity, config) /* Field[] */ {
 
 function buildBeforeBase(entity, config) /* Code[] */ {
   const requiredImports = [
-    `import { batchLoad, batchLoadTopMany } from '${
+    `import { ValidatePrismaArgs, batchLoad, batchLoadTopMany } from '${
       config.airentPrismaPackage ?? "@airent/prisma"
     }';`,
   ];
@@ -57,28 +57,30 @@ function buildModelImports(entity) /* Code[] */ {
 
 // build entity.code.insideBase
 
+function buildPrismaArgName(entity, prismaMethod) /* Code */ {
+  return `Prisma.${utils.toTitleCase(entity.name)}${utils.toTitleCase(
+    prismaMethod
+  )}Args`;
+}
+
 function buildPrismaMethodSignatureLines(
   config,
   entity,
   prismaMethod,
   typeSuffix
 ) /* Code[] */ {
-  const { name: entityName, strings } = entity;
-  const entName = utils.toTitleCase(entityName);
-  const prismaArgName = `Prisma.${entName}${utils.toTitleCase(
-    prismaMethod
-  )}Args`;
+  const prismaArgName = buildPrismaArgName(entity, prismaMethod);
   const universalFieldLines = getUniversalFields(entity, config).map(
     (uf) => `  ${uf.name}: ${uf.type},`
   );
   return [
     "",
     `public static async ${prismaMethod}<`,
-    `  ENTITY extends ${strings.baseClass},`,
+    `  ENTITY extends ${entity.strings.baseClass},`,
     `  T extends ${prismaArgName},`,
     ">(",
     `  this: EntityConstructor<${entity.model}, ENTITY>,`,
-    `  args: Prisma.SelectSubset<T, ${prismaArgName}>,`,
+    `  args: ValidatePrismaArgs<T, ${prismaArgName}>,`,
     ...universalFieldLines,
     `): Promise<ENTITY${typeSuffix}> {`,
   ];
@@ -86,6 +88,7 @@ function buildPrismaMethodSignatureLines(
 
 function buildPrismaManyMethodLines(entity, config, prismaMethod) /* Code[] */ {
   const prismaModelName = utils.toCamelCase(entity.name);
+  const prismaArgName = buildPrismaArgName(entity, prismaMethod);
   const universalFields = getUniversalFields(entity, config);
   const beforeLines = buildPrismaMethodSignatureLines(
     config,
@@ -96,7 +99,7 @@ function buildPrismaManyMethodLines(entity, config, prismaMethod) /* Code[] */ {
   const afterLines = ["  return (this as any).fromArray(models);", "}"];
 
   const variableName = universalFields.length === 0 ? "models" : "prismaModels";
-  const prismaLoaderLine = `  const ${variableName} = await prisma.${prismaModelName}.${prismaMethod}(args);`;
+  const prismaLoaderLine = `  const ${variableName} = await prisma.${prismaModelName}.${prismaMethod}(args as unknown as Prisma.SelectSubset<T, ${prismaArgName}>);`;
 
   if (universalFields.length === 0) {
     return [...beforeLines, prismaLoaderLine, ...afterLines];
@@ -120,6 +123,7 @@ function buildPrismaOneMethodLines(
   isNullable
 ) /* Code[] */ {
   const prismaModelName = utils.toCamelCase(entity.name);
+  const prismaArgName = buildPrismaArgName(entity, prismaMethod);
   const universalFields = getUniversalFields(entity, config);
 
   const beforeLines = buildPrismaMethodSignatureLines(
@@ -132,7 +136,7 @@ function buildPrismaOneMethodLines(
 
   const variableName = universalFields.length === 0 ? "model" : "prismaModel";
   const prismaLoaderLines = [
-    `  const ${variableName} = await prisma.${prismaModelName}.${prismaMethod}(args);`,
+    `  const ${variableName} = await prisma.${prismaModelName}.${prismaMethod}(args as unknown as Prisma.SelectSubset<T, ${prismaArgName}>);`,
     ...(isNullable
       ? [`  if (${variableName} === null) {`, "    return null;", "  }"]
       : []),
