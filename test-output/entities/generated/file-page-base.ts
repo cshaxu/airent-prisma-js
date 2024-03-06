@@ -19,6 +19,7 @@ import {
 import {
   FilePageFieldRequest,
   FilePageResponse,
+  SelectedFilePageResponse,
   RequestContext,
   FilePageModel,
 } from './file-page-type';
@@ -64,8 +65,9 @@ export class FilePageEntityBase extends BaseEntity<
     this.initialize(model);
   }
 
-  public async present<S extends FilePageFieldRequest>(fieldRequest: S): Promise<Select<FilePageResponse, S>> {
-    return {
+  public async present<S extends FilePageFieldRequest>(fieldRequest: S): Promise<SelectedFilePageResponse<S>> {
+    await this.beforePresent(fieldRequest);
+    const response = {
       ...(fieldRequest.id !== undefined && { id: this.id }),
       ...(fieldRequest.createdAt !== undefined && { createdAt: this.createdAt }),
       ...(fieldRequest.updatedAt !== undefined && { updatedAt: this.updatedAt }),
@@ -75,13 +77,15 @@ export class FilePageEntityBase extends BaseEntity<
       ...(fieldRequest.file !== undefined && { file: await this.getFile().then((one) => one.present(fieldRequest.file!)) }),
       ...(fieldRequest.chunks !== undefined && { chunks: await this.getChunks().then((a) => Promise.all(a.map((one) => one.present(fieldRequest.chunks!)))) }),
       ...(fieldRequest.context !== undefined && { context: this.context }),
-    } as Select<FilePageResponse, S>;
+    };
+    await this.afterPresent(fieldRequest, response as Select<FilePageResponse, S>);
+    return response as SelectedFilePageResponse<S>;
   }
 
   public static async presentMany<
     ENTITY extends FilePageEntityBase,
     S extends FilePageFieldRequest
-  >(entities: ENTITY[], fieldRequest: S): Promise<Select<FilePageResponse, S>[]> {
+  >(entities: ENTITY[], fieldRequest: S): Promise<SelectedFilePageResponse<S>[]> {
     return await sequential(entities.map((one) => () => one.present(fieldRequest)));
   }
 
@@ -175,7 +179,9 @@ export class FilePageEntityBase extends BaseEntity<
     args: ValidatePrismaArgs<T, Prisma.FilePageFindManyArgs>,
     context: RequestContext,
   ): Promise<ENTITY[]> {
-    const prismaModels = await prisma.filePage.findMany(args as unknown as Prisma.SelectSubset<T, Prisma.FilePageFindManyArgs>);
+    const prismaModels = await prisma.filePage.findMany(
+      args as unknown as Prisma.SelectSubset<T, Prisma.FilePageFindManyArgs>
+    );
     const models = prismaModels.map((pm) => ({ ...pm, context }));
     return (this as any).fromArray(models);
   }

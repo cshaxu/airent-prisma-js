@@ -3,6 +3,7 @@ import { FileEntityBase } from './generated/file-base';
 import {
   FileFieldRequest,
   FileResponse,
+  SelectedFileResponse,
   RequestContext,
   FileModel,
 } from './generated/file-type';

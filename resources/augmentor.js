@@ -99,10 +99,14 @@ function buildPrismaManyMethodLines(entity, config, prismaMethod) /* Code[] */ {
   const afterLines = ["  return (this as any).fromArray(models);", "}"];
 
   const variableName = universalFields.length === 0 ? "models" : "prismaModels";
-  const prismaLoaderLine = `  const ${variableName} = await prisma.${prismaModelName}.${prismaMethod}(args as unknown as Prisma.SelectSubset<T, ${prismaArgName}>);`;
+  const prismaLoaderLines = [
+    `  const ${variableName} = await prisma.${prismaModelName}.${prismaMethod}(`,
+    `    args as unknown as Prisma.SelectSubset<T, ${prismaArgName}>`,
+    "  );",
+  ];
 
   if (universalFields.length === 0) {
-    return [...beforeLines, prismaLoaderLine, ...afterLines];
+    return [...beforeLines, ...prismaLoaderLines, ...afterLines];
   }
 
   const universalFieldNameList = universalFields
@@ -110,7 +114,7 @@ function buildPrismaManyMethodLines(entity, config, prismaMethod) /* Code[] */ {
     .join(", ");
   return [
     ...beforeLines,
-    prismaLoaderLine,
+    ...prismaLoaderLines,
     `  const models = ${variableName}.map((pm) => ({ ...pm, ${universalFieldNameList} }));`,
     ...afterLines,
   ];

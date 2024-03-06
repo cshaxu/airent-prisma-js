@@ -3,6 +3,7 @@ import { FilePageChunkEntityBase } from './generated/file-page-chunk-base';
 import {
   FilePageChunkFieldRequest,
   FilePageChunkResponse,
+  SelectedFilePageChunkResponse,
   RequestContext,
   FilePageChunkModel,
 } from './generated/file-page-chunk-type';

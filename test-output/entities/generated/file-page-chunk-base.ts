@@ -19,6 +19,7 @@ import {
 import {
   FilePageChunkFieldRequest,
   FilePageChunkResponse,
+  SelectedFilePageChunkResponse,
   RequestContext,
   FilePageChunkModel,
 } from './file-page-chunk-type';
@@ -67,8 +68,9 @@ export class FilePageChunkEntityBase extends BaseEntity<
     this.initialize(model);
   }
 
-  public async present<S extends FilePageChunkFieldRequest>(fieldRequest: S): Promise<Select<FilePageChunkResponse, S>> {
-    return {
+  public async present<S extends FilePageChunkFieldRequest>(fieldRequest: S): Promise<SelectedFilePageChunkResponse<S>> {
+    await this.beforePresent(fieldRequest);
+    const response = {
       ...(fieldRequest.id !== undefined && { id: this.id }),
       ...(fieldRequest.createdAt !== undefined && { createdAt: this.createdAt }),
       ...(fieldRequest.updatedAt !== undefined && { updatedAt: this.updatedAt }),
@@ -80,13 +82,15 @@ export class FilePageChunkEntityBase extends BaseEntity<
       ...(fieldRequest.file !== undefined && { file: await this.getFile().then((one) => one.present(fieldRequest.file!)) }),
       ...(fieldRequest.page !== undefined && { page: await this.getPage().then((one) => one.present(fieldRequest.page!)) }),
       ...(fieldRequest.context !== undefined && { context: this.context }),
-    } as Select<FilePageChunkResponse, S>;
+    };
+    await this.afterPresent(fieldRequest, response as Select<FilePageChunkResponse, S>);
+    return response as SelectedFilePageChunkResponse<S>;
   }
 
   public static async presentMany<
     ENTITY extends FilePageChunkEntityBase,
     S extends FilePageChunkFieldRequest
-  >(entities: ENTITY[], fieldRequest: S): Promise<Select<FilePageChunkResponse, S>[]> {
+  >(entities: ENTITY[], fieldRequest: S): Promise<SelectedFilePageChunkResponse<S>[]> {
     return await sequential(entities.map((one) => () => one.present(fieldRequest)));
   }
 
@@ -180,7 +184,9 @@ export class FilePageChunkEntityBase extends BaseEntity<
     args: ValidatePrismaArgs<T, Prisma.FilePageChunkFindManyArgs>,
     context: RequestContext,
   ): Promise<ENTITY[]> {
-    const prismaModels = await prisma.filePageChunk.findMany(args as unknown as Prisma.SelectSubset<T, Prisma.FilePageChunkFindManyArgs>);
+    const prismaModels = await prisma.filePageChunk.findMany(
+      args as unknown as Prisma.SelectSubset<T, Prisma.FilePageChunkFindManyArgs>
+    );
     const models = prismaModels.map((pm) => ({ ...pm, context }));
     return (this as any).fromArray(models);
   }

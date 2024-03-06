@@ -19,6 +19,7 @@ import {
 import {
   FileFieldRequest,
   FileResponse,
+  SelectedFileResponse,
   RequestContext,
   FileModel,
 } from './file-type';
@@ -58,19 +59,22 @@ export class FileEntityBase extends BaseEntity<
     this.initialize(model);
   }
 
-  public async present<S extends FileFieldRequest>(fieldRequest: S): Promise<Select<FileResponse, S>> {
-    return {
+  public async present<S extends FileFieldRequest>(fieldRequest: S): Promise<SelectedFileResponse<S>> {
+    await this.beforePresent(fieldRequest);
+    const response = {
       ...(fieldRequest.size !== undefined && { size: this.size }),
       ...(fieldRequest.type !== undefined && { type: this.type }),
       ...(fieldRequest.chunks !== undefined && { chunks: await this.getChunks().then((a) => Promise.all(a.map((one) => one.present(fieldRequest.chunks!)))) }),
       ...(fieldRequest.context !== undefined && { context: this.context }),
-    } as Select<FileResponse, S>;
+    };
+    await this.afterPresent(fieldRequest, response as Select<FileResponse, S>);
+    return response as SelectedFileResponse<S>;
   }
 
   public static async presentMany<
     ENTITY extends FileEntityBase,
     S extends FileFieldRequest
-  >(entities: ENTITY[], fieldRequest: S): Promise<Select<FileResponse, S>[]> {
+  >(entities: ENTITY[], fieldRequest: S): Promise<SelectedFileResponse<S>[]> {
     return await sequential(entities.map((one) => () => one.present(fieldRequest)));
   }
 
@@ -163,7 +167,9 @@ export class FileEntityBase extends BaseEntity<
     args: ValidatePrismaArgs<T, Prisma.FileFindManyArgs>,
     context: RequestContext,
   ): Promise<ENTITY[]> {
-    const prismaModels = await prisma.file.findMany(args as unknown as Prisma.SelectSubset<T, Prisma.FileFindManyArgs>);
+    const prismaModels = await prisma.file.findMany(
+      args as unknown as Prisma.SelectSubset<T, Prisma.FileFindManyArgs>
+    );
     const models = prismaModels.map((pm) => ({ ...pm, context }));
     return (this as any).fromArray(models);
   }

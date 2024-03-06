@@ -1,5 +1,6 @@
 import { FileModel } from './file-type';
 import { FilePageModel } from './file-page-type';
+import { Select } from 'airent';
 import { FileFieldRequest, FileResponse } from './file-type';
 import { FilePageFieldRequest, FilePageResponse } from './file-page-type';
 import { FilePageChunk as PrismaFilePageChunk } from '@prisma/client';
@@ -37,3 +38,5 @@ export type FilePageChunkResponse = {
   page?: FilePageResponse;
   context?: RequestContext;
 };
+
+export type SelectedFilePageChunkResponse<S extends FilePageChunkFieldRequest> = Select<FilePageChunkResponse, S>;

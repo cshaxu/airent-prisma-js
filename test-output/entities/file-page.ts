@@ -3,6 +3,7 @@ import { FilePageEntityBase } from './generated/file-page-base';
 import {
   FilePageFieldRequest,
   FilePageResponse,
+  SelectedFilePageResponse,
   RequestContext,
   FilePageModel,
 } from './generated/file-page-type';
