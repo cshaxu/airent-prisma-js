@@ -107,8 +107,12 @@ function buildWhere(loadKeys: LoadKey[], allowIn: boolean = true): LoadKey {
     return where;
   }
   if (allowIn && multiKeys.length === 1) {
-    where[multiKeys[0]] = { in: map[multiKeys[0]] };
-    return where;
+    const onlyMultiKey = multiKeys[0];
+    const values = map[onlyMultiKey];
+    if (!["function", "object"].includes(typeof values[0])) {
+      where[onlyMultiKey] = { in: values };
+      return where;
+    }
   }
   where["OR"] = loadKeys.map((loadKey) => omit(loadKey, singleKeys));
   return where;
