@@ -1,10 +1,10 @@
 import { LoadKey, toArrayMap, toObjectMap } from 'airent';
+import { Context } from '../../test-resources/context';
 import { FilePageEntityBase } from './generated/file-page-base';
 import {
   FilePageFieldRequest,
   FilePageResponse,
   SelectedFilePageResponse,
-  RequestContext,
   FilePageModel,
 } from './generated/file-page-type';
 import { FileEntity } from './file';

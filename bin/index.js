@@ -29,6 +29,7 @@ async function getShouldEnable(name, isEnabled) {
  *  @property {?string} airentPackage
  *  @property {string} schemaPath
  *  @property {string} entityPath
+ *  @property {string} contextImportPath
  *  @property {?string[]} [augmentors]
  *  @property {?Template[]} [templates]
  *  @property {?string} extensionSchemaPath

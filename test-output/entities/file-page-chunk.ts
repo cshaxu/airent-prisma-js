@@ -1,10 +1,10 @@
 import { LoadKey, toArrayMap, toObjectMap } from 'airent';
+import { Context } from '../../test-resources/context';
 import { FilePageChunkEntityBase } from './generated/file-page-chunk-base';
 import {
   FilePageChunkFieldRequest,
   FilePageChunkResponse,
   SelectedFilePageChunkResponse,
-  RequestContext,
   FilePageChunkModel,
 } from './generated/file-page-chunk-type';
 import { FileEntity } from './file';

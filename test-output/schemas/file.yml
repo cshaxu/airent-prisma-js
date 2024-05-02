@@ -19,10 +19,8 @@ types:
   - name: PrismaFileType
     aliasOf: FileType
     import: '@prisma/client'
-  - name: RequestContext
-    define: '{}'
   - name: FileModel
-    define: 'PrismaFile & { context: RequestContext } & { pages?: FilePageModel[]; chunks?: FilePageChunkModel[] }'
+    define: 'PrismaFile & { pages?: FilePageModel[]; chunks?: FilePageChunkModel[] }'
 fields:
   - id: 3
     name: size
@@ -62,7 +60,3 @@ fields:
       - pageId: asc
       - chunkId: desc
     take: 10
-  - id: 0
-    name: context
-    type: RequestContext
-    strategy: primitive

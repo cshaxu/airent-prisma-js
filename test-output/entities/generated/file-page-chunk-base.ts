@@ -14,13 +14,13 @@ import {
   toArrayMap,
   toObjectMap,
 } from 'airent';
+import { Context } from '../../../test-resources/context';
 
 /** generated */
 import {
   FilePageChunkFieldRequest,
   FilePageChunkResponse,
   SelectedFilePageChunkResponse,
-  RequestContext,
   FilePageChunkModel,
 } from './file-page-chunk-type';
 
@@ -32,7 +32,7 @@ import { FilePageEntity } from '../file-page';
 import { FilePageChunk as PrismaFilePageChunk } from '@prisma/client';
 
 export class FilePageChunkEntityBase extends BaseEntity<
-  FilePageChunkModel, FilePageChunkFieldRequest, FilePageChunkResponse
+  FilePageChunkModel, Context, FilePageChunkFieldRequest, FilePageChunkResponse
 > {
   public id: string;
   public createdAt: Date;
@@ -42,7 +42,6 @@ export class FilePageChunkEntityBase extends BaseEntity<
   public chunkId: number;
   public startLineId: number;
   public endLineId: number;
-  public context: RequestContext;
 
   protected file?: FileEntity;
 
@@ -50,10 +49,11 @@ export class FilePageChunkEntityBase extends BaseEntity<
 
   public constructor(
     model: FilePageChunkModel,
+    context: Context,
     group: FilePageChunkEntityBase[],
     lock: AsyncLock,
   ) {
-    super(group, lock);
+    super(context, group, lock);
 
     this.id = model.id;
     this.createdAt = model.createdAt;
@@ -63,9 +63,8 @@ export class FilePageChunkEntityBase extends BaseEntity<
     this.chunkId = model.chunkId;
     this.startLineId = model.startLineId;
     this.endLineId = model.endLineId;
-    this.context = model.context;
 
-    this.initialize(model);
+    this.initialize(model, context);
   }
 
   public async present<S extends FilePageChunkFieldRequest>(fieldRequest: S): Promise<SelectedFilePageChunkResponse<S>> {
@@ -81,7 +80,6 @@ export class FilePageChunkEntityBase extends BaseEntity<
       ...(fieldRequest.endLineId !== undefined && { endLineId: this.endLineId }),
       ...(fieldRequest.file !== undefined && { file: await this.getFile().then((one) => one.present(fieldRequest.file!)) }),
       ...(fieldRequest.page !== undefined && { page: await this.getPage().then((one) => one.present(fieldRequest.page!)) }),
-      ...(fieldRequest.context !== undefined && { context: this.context }),
     };
     await this.afterPresent(fieldRequest, response as Select<FilePageChunkResponse, S>);
     return response as SelectedFilePageChunkResponse<S>;
@@ -106,14 +104,13 @@ export class FilePageChunkEntityBase extends BaseEntity<
         }));
     },
     loader: async (keys: LoadKey[]) => {
-      const models = await batchLoad(prisma.file.findMany, keys, 1234).then((models) => models.map((m) => ({ ...m, context: this.context })));
-      return FileEntity.fromArray(models);
+      const models = await batchLoad(prisma.file.findMany, keys, 1234).then((models) => models.map((m) => ({ ...m })));
+      return FileEntity.fromArray(models, this.context);
     },
     setter: (sources: FilePageChunkEntityBase[], targets: FileEntity[]) => {
       const map = toObjectMap(targets, (one) => JSON.stringify({ id: one.id }), (one) => one);
       sources.forEach((one) => {
         one.file = map.get(JSON.stringify({ id: one.fileId }))!;
-        one.file.context = one.context;
       });
     },
   };
@@ -141,14 +138,13 @@ export class FilePageChunkEntityBase extends BaseEntity<
         }));
     },
     loader: async (keys: LoadKey[]) => {
-      const models = await batchLoad(prisma.filePage.findMany, keys, 1234).then((models) => models.map((m) => ({ ...m, context: this.context })));
-      return FilePageEntity.fromArray(models);
+      const models = await batchLoad(prisma.filePage.findMany, keys, 1234).then((models) => models.map((m) => ({ ...m })));
+      return FilePageEntity.fromArray(models, this.context);
     },
     setter: (sources: FilePageChunkEntityBase[], targets: FilePageEntity[]) => {
       const map = toObjectMap(targets, (one) => JSON.stringify({ fileId: one.fileId, pageId: one.pageId }), (one) => one);
       sources.forEach((one) => {
         one.page = map.get(JSON.stringify({ fileId: one.fileId, pageId: one.pageId }))!;
-        one.page.context = one.context;
       });
     },
   };
@@ -165,12 +161,12 @@ export class FilePageChunkEntityBase extends BaseEntity<
     this.page = page;
   }
 
-  protected initialize(model: FilePageChunkModel): void {
+  protected initialize(model: FilePageChunkModel, context: Context): void {
     if (model.file !== undefined) {
-      this.file = FileEntity.fromOne({ ...model.file, context: this.context });
+      this.file = FileEntity.fromOne({ ...model.file }, context);
     }
     if (model.page !== undefined) {
-      this.page = FilePageEntity.fromOne({ ...model.page, context: this.context });
+      this.page = FilePageEntity.fromOne({ ...model.page }, context);
     }
   }
 
@@ -180,125 +176,116 @@ export class FilePageChunkEntityBase extends BaseEntity<
     ENTITY extends FilePageChunkEntityBase,
     T extends Prisma.FilePageChunkFindManyArgs,
   >(
-    this: EntityConstructor<FilePageChunkModel, ENTITY>,
+    this: EntityConstructor<FilePageChunkModel, Context, ENTITY>,
     args: ValidatePrismaArgs<T, Prisma.FilePageChunkFindManyArgs>,
-    context: RequestContext,
+    context: Context,
   ): Promise<ENTITY[]> {
-    const prismaModels = await prisma.filePageChunk.findMany(
+    const models = await prisma.filePageChunk.findMany(
       args as unknown as Prisma.SelectSubset<T, Prisma.FilePageChunkFindManyArgs>
     );
-    const models = prismaModels.map((pm) => ({ ...pm, context }));
-    return (this as any).fromArray(models);
+    return (this as any).fromArray(models, context);
   }
 
   public static async findUnique<
     ENTITY extends FilePageChunkEntityBase,
     T extends Prisma.FilePageChunkFindUniqueArgs,
   >(
-    this: EntityConstructor<FilePageChunkModel, ENTITY>,
+    this: EntityConstructor<FilePageChunkModel, Context, ENTITY>,
     args: ValidatePrismaArgs<T, Prisma.FilePageChunkFindUniqueArgs>,
-    context: RequestContext,
+    context: Context,
   ): Promise<ENTITY | null> {
-    const prismaModel = await prisma.filePageChunk.findUnique(args as unknown as Prisma.SelectSubset<T, Prisma.FilePageChunkFindUniqueArgs>);
-    if (prismaModel === null) {
+    const model = await prisma.filePageChunk.findUnique(args as unknown as Prisma.SelectSubset<T, Prisma.FilePageChunkFindUniqueArgs>);
+    if (model === null) {
       return null;
     }
-    const model = { ...prismaModel, context };
-    return (this as any).fromOne(model);
+    return (this as any).fromOne(model, context);
   }
 
   public static async findFirst<
     ENTITY extends FilePageChunkEntityBase,
     T extends Prisma.FilePageChunkFindFirstArgs,
   >(
-    this: EntityConstructor<FilePageChunkModel, ENTITY>,
+    this: EntityConstructor<FilePageChunkModel, Context, ENTITY>,
     args: ValidatePrismaArgs<T, Prisma.FilePageChunkFindFirstArgs>,
-    context: RequestContext,
+    context: Context,
   ): Promise<ENTITY | null> {
-    const prismaModel = await prisma.filePageChunk.findFirst(args as unknown as Prisma.SelectSubset<T, Prisma.FilePageChunkFindFirstArgs>);
-    if (prismaModel === null) {
+    const model = await prisma.filePageChunk.findFirst(args as unknown as Prisma.SelectSubset<T, Prisma.FilePageChunkFindFirstArgs>);
+    if (model === null) {
       return null;
     }
-    const model = { ...prismaModel, context };
-    return (this as any).fromOne(model);
+    return (this as any).fromOne(model, context);
   }
 
   public static async findUniqueOrThrow<
     ENTITY extends FilePageChunkEntityBase,
     T extends Prisma.FilePageChunkFindUniqueOrThrowArgs,
   >(
-    this: EntityConstructor<FilePageChunkModel, ENTITY>,
+    this: EntityConstructor<FilePageChunkModel, Context, ENTITY>,
     args: ValidatePrismaArgs<T, Prisma.FilePageChunkFindUniqueOrThrowArgs>,
-    context: RequestContext,
+    context: Context,
   ): Promise<ENTITY> {
-    const prismaModel = await prisma.filePageChunk.findUniqueOrThrow(args as unknown as Prisma.SelectSubset<T, Prisma.FilePageChunkFindUniqueOrThrowArgs>);
-    const model = { ...prismaModel, context };
-    return (this as any).fromOne(model);
+    const model = await prisma.filePageChunk.findUniqueOrThrow(args as unknown as Prisma.SelectSubset<T, Prisma.FilePageChunkFindUniqueOrThrowArgs>);
+    return (this as any).fromOne(model, context);
   }
 
   public static async findFirstOrThrow<
     ENTITY extends FilePageChunkEntityBase,
     T extends Prisma.FilePageChunkFindFirstOrThrowArgs,
   >(
-    this: EntityConstructor<FilePageChunkModel, ENTITY>,
+    this: EntityConstructor<FilePageChunkModel, Context, ENTITY>,
     args: ValidatePrismaArgs<T, Prisma.FilePageChunkFindFirstOrThrowArgs>,
-    context: RequestContext,
+    context: Context,
   ): Promise<ENTITY> {
-    const prismaModel = await prisma.filePageChunk.findFirstOrThrow(args as unknown as Prisma.SelectSubset<T, Prisma.FilePageChunkFindFirstOrThrowArgs>);
-    const model = { ...prismaModel, context };
-    return (this as any).fromOne(model);
+    const model = await prisma.filePageChunk.findFirstOrThrow(args as unknown as Prisma.SelectSubset<T, Prisma.FilePageChunkFindFirstOrThrowArgs>);
+    return (this as any).fromOne(model, context);
   }
 
   public static async upsert<
     ENTITY extends FilePageChunkEntityBase,
     T extends Prisma.FilePageChunkUpsertArgs,
   >(
-    this: EntityConstructor<FilePageChunkModel, ENTITY>,
+    this: EntityConstructor<FilePageChunkModel, Context, ENTITY>,
     args: ValidatePrismaArgs<T, Prisma.FilePageChunkUpsertArgs>,
-    context: RequestContext,
+    context: Context,
   ): Promise<ENTITY> {
-    const prismaModel = await prisma.filePageChunk.upsert(args as unknown as Prisma.SelectSubset<T, Prisma.FilePageChunkUpsertArgs>);
-    const model = { ...prismaModel, context };
-    return (this as any).fromOne(model);
+    const model = await prisma.filePageChunk.upsert(args as unknown as Prisma.SelectSubset<T, Prisma.FilePageChunkUpsertArgs>);
+    return (this as any).fromOne(model, context);
   }
 
   public static async create<
     ENTITY extends FilePageChunkEntityBase,
     T extends Prisma.FilePageChunkCreateArgs,
   >(
-    this: EntityConstructor<FilePageChunkModel, ENTITY>,
+    this: EntityConstructor<FilePageChunkModel, Context, ENTITY>,
     args: ValidatePrismaArgs<T, Prisma.FilePageChunkCreateArgs>,
-    context: RequestContext,
+    context: Context,
   ): Promise<ENTITY> {
-    const prismaModel = await prisma.filePageChunk.create(args as unknown as Prisma.SelectSubset<T, Prisma.FilePageChunkCreateArgs>);
-    const model = { ...prismaModel, context };
-    return (this as any).fromOne(model);
+    const model = await prisma.filePageChunk.create(args as unknown as Prisma.SelectSubset<T, Prisma.FilePageChunkCreateArgs>);
+    return (this as any).fromOne(model, context);
   }
 
   public static async update<
     ENTITY extends FilePageChunkEntityBase,
     T extends Prisma.FilePageChunkUpdateArgs,
   >(
-    this: EntityConstructor<FilePageChunkModel, ENTITY>,
+    this: EntityConstructor<FilePageChunkModel, Context, ENTITY>,
     args: ValidatePrismaArgs<T, Prisma.FilePageChunkUpdateArgs>,
-    context: RequestContext,
+    context: Context,
   ): Promise<ENTITY> {
-    const prismaModel = await prisma.filePageChunk.update(args as unknown as Prisma.SelectSubset<T, Prisma.FilePageChunkUpdateArgs>);
-    const model = { ...prismaModel, context };
-    return (this as any).fromOne(model);
+    const model = await prisma.filePageChunk.update(args as unknown as Prisma.SelectSubset<T, Prisma.FilePageChunkUpdateArgs>);
+    return (this as any).fromOne(model, context);
   }
 
   public static async delete<
     ENTITY extends FilePageChunkEntityBase,
     T extends Prisma.FilePageChunkDeleteArgs,
   >(
-    this: EntityConstructor<FilePageChunkModel, ENTITY>,
+    this: EntityConstructor<FilePageChunkModel, Context, ENTITY>,
     args: ValidatePrismaArgs<T, Prisma.FilePageChunkDeleteArgs>,
-    context: RequestContext,
+    context: Context,
   ): Promise<ENTITY> {
-    const prismaModel = await prisma.filePageChunk.delete(args as unknown as Prisma.SelectSubset<T, Prisma.FilePageChunkDeleteArgs>);
-    const model = { ...prismaModel, context };
-    return (this as any).fromOne(model);
+    const model = await prisma.filePageChunk.delete(args as unknown as Prisma.SelectSubset<T, Prisma.FilePageChunkDeleteArgs>);
+    return (this as any).fromOne(model, context);
   }
 
   public static createMany = prisma.filePageChunk.createMany;

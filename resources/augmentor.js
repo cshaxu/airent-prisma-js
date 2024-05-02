@@ -79,8 +79,9 @@ function buildPrismaMethodSignatureLines(
     `  ENTITY extends ${entity.strings.baseClass},`,
     `  T extends ${prismaArgName},`,
     ">(",
-    `  this: EntityConstructor<${entity.model}, ENTITY>,`,
+    `  this: EntityConstructor<${entity.model}, Context, ENTITY>,`,
     `  args: ValidatePrismaArgs<T, ${prismaArgName}>,`,
+    "  context: Context,",
     ...universalFieldLines,
     `): Promise<ENTITY${typeSuffix}> {`,
   ];
@@ -96,7 +97,10 @@ function buildPrismaManyMethodLines(entity, config, prismaMethod) /* Code[] */ {
     prismaMethod,
     "[]"
   );
-  const afterLines = ["  return (this as any).fromArray(models);", "}"];
+  const afterLines = [
+    "  return (this as any).fromArray(models, context);",
+    "}",
+  ];
 
   const variableName = universalFields.length === 0 ? "models" : "prismaModels";
   const prismaLoaderLines = [
@@ -136,7 +140,7 @@ function buildPrismaOneMethodLines(
     prismaMethod,
     isNullable ? " | null" : ""
   );
-  const afterLines = ["  return (this as any).fromOne(model);", "}"];
+  const afterLines = ["  return (this as any).fromOne(model, context);", "}"];
 
   const variableName = universalFields.length === 0 ? "model" : "prismaModel";
   const prismaLoaderLines = [
@@ -206,7 +210,7 @@ function buildInitializeMethodLines(entity, config) /* Code[] */ {
         utils.isArrayField(f)
           ? `model.${f.name}.map((m) => ({ ...m${universalFieldSettersString} }))`
           : `{ ...model.${f.name}${universalFieldSettersString} }`
-      });`,
+      }, context);`,
       "}",
     ])
     .map((line) => `  ${line}`);
@@ -215,7 +219,7 @@ function buildInitializeMethodLines(entity, config) /* Code[] */ {
   }
   return [
     "",
-    `protected initialize(model: ${entity.model}): void {`,
+    `protected initialize(model: ${entity.model}, context: Context): void {`,
     ...lines,
     "}",
   ];

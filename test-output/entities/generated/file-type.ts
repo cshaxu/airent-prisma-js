@@ -8,22 +8,18 @@ import { FileType as PrismaFileType } from '@prisma/client';
 
 /** structs */
 
-export type RequestContext = {};
-
-export type FileModel = PrismaFile & { context: RequestContext } & { pages?: FilePageModel[]; chunks?: FilePageChunkModel[] };
+export type FileModel = PrismaFile & { pages?: FilePageModel[]; chunks?: FilePageChunkModel[] };
 
 export type FileFieldRequest = {
   size?: boolean;
   type?: boolean;
   chunks?: FilePageChunkFieldRequest;
-  context?: boolean;
 };
 
 export type FileResponse = {
   size?: number;
   type?: PrismaFileType;
   chunks?: FilePageChunkResponse[];
-  context?: RequestContext;
 };
 
 export type SelectedFileResponse<S extends FileFieldRequest> = Select<FileResponse, S>;
