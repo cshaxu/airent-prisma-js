@@ -36,7 +36,8 @@ async function loadConfig(isVerbose) {
   }
   const configContent = await fs.promises.readFile(CONFIG_FILE_PATH, "utf8");
   const config = JSON.parse(configContent);
-  const { extensionSchemaPath, schemaPath } = config;
+  const { schemaPath, prisma } = config;
+  const { extensionSchemaPath } = prisma;
   const loadedConfig = {
     schemaPath: path.join(PROJECT_PATH, extensionSchemaPath),
     outputPath: path.join(PROJECT_PATH, schemaPath),

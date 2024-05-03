@@ -24,6 +24,13 @@ async function getShouldEnable(name, isEnabled) {
   return shouldEnable === "yes";
 }
 
+/** @typedef {Object} PrismaConfig
+ * @property {?string} airentPrismaPackage
+ * @property {string} extensionSchemaPath
+ * @property {string} prismaImport
+ * @property {string} prismaBatchSize
+ */
+
 /** @typedef {Object} Config
  *  @property {"commonjs" | "module"} type
  *  @property {?string} airentPackage
@@ -61,26 +68,27 @@ async function configure() {
   );
   if (shouldEnablePrismaAugmentor) {
     const defaultPrismaImport = "import prisma from '@/lib/prisma';";
-    config.prismaImport = await askQuestion(
+    config.prisma.prismaImport = await askQuestion(
       'Statement to import "prisma"',
-      config.prismaImport ?? defaultPrismaImport
+      config.prisma.prismaImport ?? defaultPrismaImport
     );
-    config.prismaBatchSize = await askQuestion(
+    config.prisma.prismaBatchSize = await askQuestion(
       "Prisma batch size",
-      config.prismaBatchSize ?? "1000"
+      config.prisma.prismaBatchSize ?? "1000"
     );
     augmentors.push(PRISMA_AUGMENTOR_PATH);
   } else if (!isPrismaAugmentorEnabled) {
     return;
   }
 
-  const isPrismaYamlGeneratorEnabled = !!config.extensionSchemaPath?.length;
+  const isPrismaYamlGeneratorEnabled =
+    !!config.prisma.extensionSchemaPath?.length;
   const shouldEnablePrismaYamlGenerator = await getShouldEnable(
     "Prisma Dbml-based YAML Generator",
     isPrismaYamlGeneratorEnabled
   );
   if (shouldEnablePrismaYamlGenerator) {
-    config.extensionSchemaPath = config.schemaPath;
+    config.prisma.extensionSchemaPath = config.schemaPath;
     config.schemaPath = "node_modules/.airent/schemas";
     console.log(
       '[AIRENT-PRISMA/INFO] Please run "npx airent-prisma generate" before "npx airent" in the future.'

@@ -18,14 +18,14 @@ const utils = require("airent/resources/utils.js");
 function buildBeforeBase(entity, config) /* Code[] */ {
   const requiredImports = [
     `import { ValidatePrismaArgs, batchLoad, batchLoadTopMany } from '${
-      config.airentPrismaPackage ?? "@airent/prisma"
+      config.prisma.airentPrismaPackage ?? "@airent/prisma"
     }';`,
   ];
   if (entity.isPrisma !== false) {
     requiredImports.push("import { Prisma } from '@prisma/client';");
   }
   const prismaImport =
-    JSON.parse(JSON.stringify(config.prismaImport)) ??
+    JSON.parse(JSON.stringify(config.prisma.prismaImport)) ??
     "import prisma from 'TODO: specify prismaImport in your airent config';";
 
   return [...requiredImports, prismaImport, ...buildModelImports(entity)];
@@ -251,7 +251,9 @@ function buildAssociationFieldModelsLoader(field, config) /* Code */ {
   const topSize = field.take ? `, ${field.take}` : "";
 
   const batchSize =
-    config.prismaBatchSize === undefined ? "" : `, ${config.prismaBatchSize}`;
+    config.prisma.prismaBatchSize === undefined
+      ? ""
+      : `, ${config.prisma.prismaBatchSize}`;
 
   return `await ${batch}(${loader}${matcher}, keys${topSize}${batchSize})`;
 }
