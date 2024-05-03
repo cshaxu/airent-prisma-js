@@ -104,7 +104,7 @@ export class FilePageChunkEntityBase extends BaseEntity<
         }));
     },
     loader: async (keys: LoadKey[]) => {
-      const models = await batchLoad(prisma.file.findMany, keys, 1234).then((models) => models.map((m) => ({ ...m })));
+      const models = await batchLoad(prisma.file.findMany, keys, 1234);
       return FileEntity.fromArray(models, this.context);
     },
     setter: (sources: FilePageChunkEntityBase[], targets: FileEntity[]) => {
@@ -138,7 +138,7 @@ export class FilePageChunkEntityBase extends BaseEntity<
         }));
     },
     loader: async (keys: LoadKey[]) => {
-      const models = await batchLoad(prisma.filePage.findMany, keys, 1234).then((models) => models.map((m) => ({ ...m })));
+      const models = await batchLoad(prisma.filePage.findMany, keys, 1234);
       return FilePageEntity.fromArray(models, this.context);
     },
     setter: (sources: FilePageChunkEntityBase[], targets: FilePageEntity[]) => {
@@ -163,10 +163,10 @@ export class FilePageChunkEntityBase extends BaseEntity<
 
   protected initialize(model: FilePageChunkModel, context: Context): void {
     if (model.file !== undefined) {
-      this.file = FileEntity.fromOne({ ...model.file }, context);
+      this.file = FileEntity.fromOne(model.file, context);
     }
     if (model.page !== undefined) {
-      this.page = FilePageEntity.fromOne({ ...model.page }, context);
+      this.page = FilePageEntity.fromOne(model.page, context);
     }
   }
 

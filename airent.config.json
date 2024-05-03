@@ -7,7 +7,5 @@
   "contextImportPath": "test-resources/context",
   "augmentors": ["resources/augmentor.js"],
   "prismaImport": "import prisma from '@/lib/prisma';",
-  "prismaBatchSize": 1234,
-  "prismaModelUniversalFields": [],
-  "prismaModelUniversalTypes": []
+  "prismaBatchSize": 1234
 }

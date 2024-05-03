@@ -13,11 +13,6 @@ const utils = require("airent/resources/utils.js");
  * - take: number | undefined, association-field-level key to specify limit on the field
  */
 
-function getUniversalFields(entity, config) /* Field[] */ {
-  const names = (config.prismaModelUniversalFields ?? []).map((f) => f.name);
-  return entity.fields.filter((f) => names.includes(f.name));
-}
-
 // build entity.code.beforeBase
 
 function buildBeforeBase(entity, config) /* Code[] */ {
@@ -70,9 +65,6 @@ function buildPrismaMethodSignatureLines(
   typeSuffix
 ) /* Code[] */ {
   const prismaArgName = buildPrismaArgName(entity, prismaMethod);
-  const universalFieldLines = getUniversalFields(entity, config).map(
-    (uf) => `  ${uf.name}: ${uf.type},`
-  );
   return [
     "",
     `public static async ${prismaMethod}<`,
@@ -82,7 +74,6 @@ function buildPrismaMethodSignatureLines(
     `  this: EntityConstructor<${entity.model}, Context, ENTITY>,`,
     `  args: ValidatePrismaArgs<T, ${prismaArgName}>,`,
     "  context: Context,",
-    ...universalFieldLines,
     `): Promise<ENTITY${typeSuffix}> {`,
   ];
 }
@@ -90,7 +81,6 @@ function buildPrismaMethodSignatureLines(
 function buildPrismaManyMethodLines(entity, config, prismaMethod) /* Code[] */ {
   const prismaModelName = utils.toCamelCase(entity.name);
   const prismaArgName = buildPrismaArgName(entity, prismaMethod);
-  const universalFields = getUniversalFields(entity, config);
   const beforeLines = buildPrismaMethodSignatureLines(
     config,
     entity,
@@ -102,26 +92,13 @@ function buildPrismaManyMethodLines(entity, config, prismaMethod) /* Code[] */ {
     "}",
   ];
 
-  const variableName = universalFields.length === 0 ? "models" : "prismaModels";
   const prismaLoaderLines = [
-    `  const ${variableName} = await prisma.${prismaModelName}.${prismaMethod}(`,
+    `  const models = await prisma.${prismaModelName}.${prismaMethod}(`,
     `    args as unknown as Prisma.SelectSubset<T, ${prismaArgName}>`,
     "  );",
   ];
 
-  if (universalFields.length === 0) {
-    return [...beforeLines, ...prismaLoaderLines, ...afterLines];
-  }
-
-  const universalFieldNameList = universalFields
-    .map((uf) => uf.name)
-    .join(", ");
-  return [
-    ...beforeLines,
-    ...prismaLoaderLines,
-    `  const models = ${variableName}.map((pm) => ({ ...pm, ${universalFieldNameList} }));`,
-    ...afterLines,
-  ];
+  return [...beforeLines, ...prismaLoaderLines, ...afterLines];
 }
 
 function buildPrismaOneMethodLines(
@@ -132,7 +109,6 @@ function buildPrismaOneMethodLines(
 ) /* Code[] */ {
   const prismaModelName = utils.toCamelCase(entity.name);
   const prismaArgName = buildPrismaArgName(entity, prismaMethod);
-  const universalFields = getUniversalFields(entity, config);
 
   const beforeLines = buildPrismaMethodSignatureLines(
     config,
@@ -142,27 +118,14 @@ function buildPrismaOneMethodLines(
   );
   const afterLines = ["  return (this as any).fromOne(model, context);", "}"];
 
-  const variableName = universalFields.length === 0 ? "model" : "prismaModel";
   const prismaLoaderLines = [
-    `  const ${variableName} = await prisma.${prismaModelName}.${prismaMethod}(args as unknown as Prisma.SelectSubset<T, ${prismaArgName}>);`,
+    `  const model = await prisma.${prismaModelName}.${prismaMethod}(args as unknown as Prisma.SelectSubset<T, ${prismaArgName}>);`,
     ...(isNullable
-      ? [`  if (${variableName} === null) {`, "    return null;", "  }"]
+      ? [`  if (model === null) {`, "    return null;", "  }"]
       : []),
   ];
 
-  if (universalFields.length === 0) {
-    return [...beforeLines, ...prismaLoaderLines, ...afterLines];
-  }
-
-  const universalFieldNameList = universalFields
-    .map((uf) => uf.name)
-    .join(", ");
-  return [
-    ...beforeLines,
-    ...prismaLoaderLines,
-    `  const model = { ...${variableName}, ${universalFieldNameList} };`,
-    ...afterLines,
-  ];
+  return [...beforeLines, ...prismaLoaderLines, ...afterLines];
 }
 
 function buildPrismaNullableOneMethodLines(
@@ -190,13 +153,6 @@ function buildPrismaPassThruMethodLines(entity, prismaMethod) /* Code[] */ {
 }
 
 function buildInitializeMethodLines(entity, config) /* Code[] */ {
-  const universalFields = getUniversalFields(entity, config);
-  const universalFieldSetters = universalFields
-    .map((uf) => uf.name)
-    .map((ufn) => `${ufn}: this.${ufn}`)
-    .join(", ");
-  const universalFieldSettersString =
-    universalFields.length === 0 ? "" : `, ${universalFieldSetters}`;
   const lines = entity.fields
     .filter(utils.isAssociationField)
     .filter((f) => f.isPrisma)
@@ -206,11 +162,7 @@ function buildInitializeMethodLines(entity, config) /* Code[] */ {
         utils.isNullableField(f) ? `model.${f.name} === null ? null : ` : ""
       }${f._type._entity.strings.entityClass}.${
         utils.isArrayField(f) ? "fromArray" : "fromOne"
-      }(${
-        utils.isArrayField(f)
-          ? `model.${f.name}.map((m) => ({ ...m${universalFieldSettersString} }))`
-          : `{ ...model.${f.name}${universalFieldSettersString} }`
-      }, context);`,
+      }(${`model.${f.name}`}, context);`,
       "}",
     ])
     .map((line) => `  ${line}`);
@@ -301,19 +253,10 @@ function buildAssociationFieldModelsLoader(field, config) /* Code */ {
   const batchSize =
     config.prismaBatchSize === undefined ? "" : `, ${config.prismaBatchSize}`;
 
-  const universalFields = getUniversalFields(entity, config);
-  const universalFieldSetters = universalFields
-    .map((uf) => uf.name)
-    .map((ufn) => `${ufn}: this.${ufn}`)
-    .join(", ");
-  const universalFieldSettersString =
-    universalFields.length === 0 ? "" : `, ${universalFieldSetters}`;
-
-  return `await ${batch}(${loader}${matcher}, keys${topSize}${batchSize}).then((models) => models.map((m) => ({ ...m${universalFieldSettersString} })))`;
+  return `await ${batch}(${loader}${matcher}, keys${topSize}${batchSize})`;
 }
 
-function buildLoadConfigSetterLines(config, field) /* Code[] */ {
-  const universalFields = getUniversalFields(field._type._entity, config);
+function buildLoadConfigSetterLines(field) /* Code[] */ {
   const mapper = field.code.loadConfig.targetMapper;
   const setter = field.code.loadConfig.sourceSetter;
   const mapperLine = `const map = ${mapper};`;
@@ -323,18 +266,10 @@ function buildLoadConfigSetterLines(config, field) /* Code[] */ {
       `sources.forEach((one) => (one.${field.name} = ${setter}));`,
     ];
   }
-  const universalFieldUpdateLines = universalFields.map((uf) => [
-    utils.isArrayField(field)
-      ? `  one.${field.name}.forEach((e) => (e.${uf.name} = one.${uf.name}));`
-      : utils.isNullableField(field)
-      ? `  if (one.${field.name} !== null) { one.${field.name}.${uf.name} = one.${uf.name}; }`
-      : `  one.${field.name}.${uf.name} = one.${uf.name};`,
-  ]);
   return [
     mapperLine,
     `sources.forEach((one) => {`,
     `  one.${field.name} = ${setter};`,
-    ...universalFieldUpdateLines.flat(),
     `});`,
   ];
 }
@@ -358,7 +293,7 @@ function augmentOne(entity, config, isVerbose) /* void */ {
     loadConfig.targetModelsLoader = isLoaderGeneratable
       ? buildAssociationFieldModelsLoader(field, config)
       : "[/* TODO: load associated models */]";
-    loadConfig.setterLines = buildLoadConfigSetterLines(config, field);
+    loadConfig.setterLines = buildLoadConfigSetterLines(field);
   });
 }
 

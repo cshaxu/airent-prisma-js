@@ -40,8 +40,6 @@ async function loadConfig(isVerbose) {
   const loadedConfig = {
     schemaPath: path.join(PROJECT_PATH, extensionSchemaPath),
     outputPath: path.join(PROJECT_PATH, schemaPath),
-    prismaModelUniversalTypes: config.prismaModelUniversalTypes ?? [],
-    prismaModelUniversalFields: config.prismaModelUniversalFields ?? [],
   };
   if (isVerbose) {
     console.log(loadedConfig);
@@ -248,7 +246,7 @@ function merge(inputSchema, tableSchema, isVerbose) {
   return { name, model, prisma, ...extras, types, fields };
 }
 
-function reconcile(inputSchemas, tableSchemas, config, isVerbose) {
+function reconcile(inputSchemas, tableSchemas, isVerbose) {
   if (isVerbose) {
     console.log("[AIRENT-PRISMA/INFO] Reconciling schemas ...");
   }
@@ -267,30 +265,13 @@ function reconcile(inputSchemas, tableSchemas, config, isVerbose) {
       ? tableSchema
       : merge(inputSchema, tableSchema, isVerbose);
 
-    // add universal types and universal fields
-    const { prismaModelUniversalTypes, prismaModelUniversalFields } = config;
-    entity.types.push(...prismaModelUniversalTypes);
-    entity.fields.push(...prismaModelUniversalFields);
-
-    const prismaModelUniversalFieldDefinitions = prismaModelUniversalFields.map(
-      (f) => `${f.name}: ${f.type}`
-    );
-    const prismaModelUniversalFieldDefinitionsString =
-      prismaModelUniversalFields.length === 0
-        ? ""
-        : ` & { ${prismaModelUniversalFieldDefinitions.join("; ")} }`;
-
     const entName = utils.toTitleCase(entity.name);
-    const primitiveModelDefinition =
+    const modelDefinition =
       entity.isPrisma === false ? entity.model : `Prisma${entName}`;
-    const modelDefinitionWithUniversalFields = `${primitiveModelDefinition}${prismaModelUniversalFieldDefinitionsString}`;
     const modelName = `${entName}Model`;
 
     if (entity.isPrisma === false) {
-      entity.types.push({
-        name: modelName,
-        define: modelDefinitionWithUniversalFields,
-      });
+      entity.types.push({ name: modelName, define: modelDefinition });
       entity.model = modelName;
       return entity;
     }
@@ -315,7 +296,7 @@ function reconcile(inputSchemas, tableSchemas, config, isVerbose) {
       prismaAssociationFields.length === 0
         ? ""
         : ` & { ${prismaModelAssociationDefinitions.join("; ")} }`;
-    const modelDefinitionWithAssociationFields = `${modelDefinitionWithUniversalFields}${prismaModelAssociationDefinitionsString}`;
+    const modelDefinitionWithAssociationFields = `${modelDefinition}${prismaModelAssociationDefinitionsString}`;
     entity.types.push({
       name: modelName,
       define: modelDefinitionWithAssociationFields,
@@ -341,12 +322,7 @@ async function generate(argv) {
   const config = await loadConfig(isVerbose);
   const inputSchemas = await loadSchemas(config.schemaPath, isVerbose);
   const tableSchemas = await loadTableSchemas(isVerbose);
-  const outputSchemas = reconcile(
-    inputSchemas,
-    tableSchemas,
-    config,
-    isVerbose
-  );
+  const outputSchemas = reconcile(inputSchemas, tableSchemas, isVerbose);
 
   // Ensure the output directory exists
   await fs.promises.mkdir(config.outputPath, { recursive: true });
