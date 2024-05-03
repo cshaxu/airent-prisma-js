@@ -16,32 +16,27 @@ function askQuestion(question, defaultAnswer) {
   ).then((a) => (a?.length ? a : defaultAnswer));
 }
 
-async function getShouldEnable(name, isEnabled) {
-  if (isEnabled) {
-    return false;
-  }
+async function getShouldEnable(name) {
   const shouldEnable = await askQuestion(`Enable "${name}"`, "yes");
   return shouldEnable === "yes";
 }
 
 /** @typedef {Object} PrismaConfig
- * @property {?string} airentPrismaPackage
- * @property {string} extensionSchemaPath
- * @property {string} prismaImport
- * @property {string} prismaBatchSize
+ *  @property {?string} libImportPath
+ *  @property {string} extensionSchemaPath
+ *  @property {string} prismaImport
+ *  @property {string} prismaBatchSize
  */
 
 /** @typedef {Object} Config
  *  @property {"commonjs" | "module"} type
- *  @property {?string} airentPackage
+ *  @property {?string} libImportPath
  *  @property {string} schemaPath
  *  @property {string} entityPath
  *  @property {string} contextImportPath
  *  @property {?string[]} [augmentors]
  *  @property {?Template[]} [templates]
- *  @property {?string} extensionSchemaPath
- *  @property {?string} airentPrismaPackage
- *  @property {?string} prismaImport
+ *  @property {?PrismaConfig} prisma
  */
 
 const CONFIG_FILE_PATH = path.join(process.cwd(), "airent.config.json");
@@ -62,31 +57,32 @@ async function configure() {
   const config = await loadConfig();
   const { augmentors } = config;
   const isPrismaAugmentorEnabled = augmentors.includes(PRISMA_AUGMENTOR_PATH);
-  const shouldEnablePrismaAugmentor = await getShouldEnable(
-    "Prisma",
-    isPrismaAugmentorEnabled
-  );
-  if (shouldEnablePrismaAugmentor) {
-    const defaultPrismaImport = "import prisma from '@/lib/prisma';";
-    config.prisma.prismaImport = await askQuestion(
-      'Statement to import "prisma"',
-      config.prisma.prismaImport ?? defaultPrismaImport
-    );
-    config.prisma.prismaBatchSize = await askQuestion(
-      "Prisma batch size",
-      config.prisma.prismaBatchSize ?? "1000"
-    );
-    augmentors.push(PRISMA_AUGMENTOR_PATH);
-  } else if (!isPrismaAugmentorEnabled) {
+  const shouldEnablePrismaAugmentor = isPrismaAugmentorEnabled
+    ? true
+    : await getShouldEnable("Prisma");
+  if (!shouldEnablePrismaAugmentor) {
     return;
   }
+  if (!isPrismaAugmentorEnabled) {
+    augmentors.push(PRISMA_AUGMENTOR_PATH);
+  }
+
+  config.prisma = config.prisma ?? {};
+
+  config.prisma.prismaImport = await askQuestion(
+    'Statement to import "prisma"',
+    config.prisma.prismaImport ?? "import prisma from '@/lib/prisma';"
+  );
+  config.prisma.prismaBatchSize = await askQuestion(
+    "Prisma batch size",
+    config.prisma.prismaBatchSize ?? "1000"
+  );
 
   const isPrismaYamlGeneratorEnabled =
     !!config.prisma.extensionSchemaPath?.length;
-  const shouldEnablePrismaYamlGenerator = await getShouldEnable(
-    "Prisma Dbml-based YAML Generator",
-    isPrismaYamlGeneratorEnabled
-  );
+  const shouldEnablePrismaYamlGenerator = isPrismaYamlGeneratorEnabled
+    ? false
+    : await getShouldEnable("Prisma Dbml-based YAML Generator");
   if (shouldEnablePrismaYamlGenerator) {
     config.prisma.extensionSchemaPath = config.schemaPath;
     config.schemaPath = "node_modules/.airent/schemas";

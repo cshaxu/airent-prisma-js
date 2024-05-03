@@ -1,9 +1,29 @@
+const path = require("path");
 const utils = require("airent/resources/utils.js");
 
+function buildRelativePackage(sourcePath, targetPath, config) /* string */ {
+  return targetPath.startsWith("./")
+    ? `${path
+        .relative(sourcePath, targetPath)
+        .replaceAll("\\", "/")}${utils.getModuleSuffix(config)}`
+    : targetPath;
+}
+
+function augmentConfig(config) /* void */ {
+  const { libImportPath } = config.prisma;
+  config.prisma.baseLibPackage = libImportPath
+    ? buildRelativePackage(
+        path.join(config.entityPath, "generated"),
+        libImportPath,
+        config
+      )
+    : "@airent/prisma";
+  config.prisma.entityLibPackage = libImportPath
+    ? buildRelativePackage(config.entityPath, libImportPath, config)
+    : "@airent/prisma";
+}
+
 /**
- * CONFIG FIELDS
- * prismaImport: string | undefined, import statement for prisma client
- *
  * YAML FLAGS
  * - prisma: { skipFields: string[]; internalFields: string[]; universalFields: string[] }
  * - isPrisma: false | undefined, top-level flag, false to skip generating prisma wrappers
@@ -17,9 +37,7 @@ const utils = require("airent/resources/utils.js");
 
 function buildBeforeBase(entity, config) /* Code[] */ {
   const requiredImports = [
-    `import { ValidatePrismaArgs, batchLoad, batchLoadTopMany } from '${
-      config.prisma.airentPrismaPackage ?? "@airent/prisma"
-    }';`,
+    `import { ValidatePrismaArgs, batchLoad, batchLoadTopMany } from '${config.prisma.baseLibPackage}';`,
   ];
   if (entity.isPrisma !== false) {
     requiredImports.push("import { Prisma } from '@prisma/client';");
@@ -301,6 +319,7 @@ function augmentOne(entity, config, isVerbose) /* void */ {
 
 function augment(data, isVerbose) {
   const { entityMap, config } = data;
+  augmentConfig(config, isVerbose);
   Object.values(entityMap).forEach((entity) =>
     augmentOne(entity, config, isVerbose)
   );
