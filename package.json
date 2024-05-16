@@ -7,7 +7,7 @@
     "airent-prisma": "./bin/index.js"
   },
   "scripts": {
-    "update": "./scripts/update.js",
+    "update": "nekoutils-updater",
     "build": "rm -rf ./lib && tsc -p tsconfig.json && crlf --set=LF bin/*",
     "test": "rm -rf ./test-output && node ./bin/index.js generate && airent"
   },
@@ -42,6 +42,7 @@
     "lodash": "^4.17.21"
   },
   "devDependencies": {
+    "@nekoutils/updater": "github:cshaxu/updater-js#1ced3a600ae97063a3ad86437d589850e52cbacc",
     "@types/async-lock": "^1.4.2",
     "@types/lodash": "^4.14.202",
     "@types/node": "^20.10.1",
