@@ -7,7 +7,7 @@
     "airent-prisma": "./bin/index.js"
   },
   "scripts": {
-    "update": "nekoutils-updater",
+    "update": "airent-updater",
     "build": "rm -rf ./lib && tsc -p tsconfig.json && crlf --set=LF bin/*",
     "test": "rm -rf ./test-output && node ./bin/index.js generate && airent"
   },
@@ -16,14 +16,13 @@
     "url": "git+https://github.com/cshaxu/airent-prisma-js.git"
   },
   "keywords": [
-    "api",
     "backend",
     "data",
     "entity",
     "framework",
     "orm",
-    "pojo",
-    "presentation"
+    "plugin",
+    "pojo"
   ],
   "author": "cshaxu",
   "license": "MIT",
@@ -42,7 +41,7 @@
     "lodash": "^4.17.21"
   },
   "devDependencies": {
-    "@nekoutils/updater": "github:cshaxu/updater-js#1ced3a600ae97063a3ad86437d589850e52cbacc",
+    "@airent/utils": "github:cshaxu/airent-utils-js#88a44b6a027e1b8c636f7e25283e310eac9c40ed",
     "@types/async-lock": "^1.4.2",
     "@types/lodash": "^4.14.202",
     "@types/node": "^20.10.1",
