@@ -7,7 +7,7 @@ import {
   SelectedFilePageResponse,
   FilePageModel,
 } from './generated/file-page-type';
-import { FileEntity } from './file';
+import { AliasedFileEntity } from './aliased-file';
 import { FilePageChunkEntity } from './file-page-chunk';
 import { FilePage as PrismaFilePage } from '@prisma/client';
 import { JsonValue as PrismaJsonValue } from '@prisma/client/runtime/library';

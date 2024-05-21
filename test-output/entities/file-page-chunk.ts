@@ -7,7 +7,7 @@ import {
   SelectedFilePageChunkResponse,
   FilePageChunkModel,
 } from './generated/file-page-chunk-type';
-import { FileEntity } from './file';
+import { AliasedFileEntity } from './aliased-file';
 import { FilePageEntity } from './file-page';
 import { FilePageChunk as PrismaFilePageChunk } from '@prisma/client';
 

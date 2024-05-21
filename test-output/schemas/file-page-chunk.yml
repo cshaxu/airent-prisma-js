@@ -17,7 +17,7 @@ types:
     aliasOf: FilePageChunk
     import: '@prisma/client'
   - name: FilePageChunkModel
-    define: 'PrismaFilePageChunk & { file?: FileModel; page?: FilePageModel }'
+    define: 'PrismaFilePageChunk & { file?: AliasedFileModel; page?: FilePageModel }'
 fields:
   - id: 1
     name: id
@@ -61,7 +61,7 @@ fields:
     isPrisma: true
   - id: 9
     name: file
-    type: File
+    type: AliasedFile
     strategy: association
     sourceKeys:
       - fileId

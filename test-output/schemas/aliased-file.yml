@@ -1,5 +1,5 @@
-name: File
-model: FileModel
+name: AliasedFile
+model: AliasedFileModel
 prisma:
   tableFields:
     - id
@@ -13,14 +13,14 @@ prisma:
   internalFields:
     - pages
 types:
-  - name: PrismaFile
-    aliasOf: File
+  - name: PrismaAliasedFile
+    aliasOf: AliasedFile
     import: '@prisma/client'
   - name: PrismaFileType
     aliasOf: FileType
     import: '@prisma/client'
-  - name: FileModel
-    define: 'PrismaFile & { pages?: FilePageModel[]; chunks?: FilePageChunkModel[] }'
+  - name: AliasedFileModel
+    define: 'PrismaAliasedFile & { pages?: FilePageModel[]; chunks?: FilePageChunkModel[] }'
 fields:
   - id: 3
     name: size

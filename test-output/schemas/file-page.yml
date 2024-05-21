@@ -18,7 +18,7 @@ types:
     aliasOf: JsonValue
     import: '@prisma/client/runtime/library'
   - name: FilePageModel
-    define: 'PrismaFilePage & { file?: FileModel; chunks?: FilePageChunkModel[] }'
+    define: 'PrismaFilePage & { file?: AliasedFileModel; chunks?: FilePageChunkModel[] }'
 fields:
   - id: 1
     name: id
@@ -52,7 +52,7 @@ fields:
     isPrisma: true
   - id: 7
     name: file
-    type: File
+    type: AliasedFile
     strategy: association
     sourceKeys:
       - fileId

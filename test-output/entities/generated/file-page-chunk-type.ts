@@ -1,13 +1,13 @@
-import { FileModel } from './file-type';
+import { AliasedFileModel } from './aliased-file-type';
 import { FilePageModel } from './file-page-type';
 import { Select } from 'airent';
-import { FileFieldRequest, FileResponse } from './file-type';
+import { AliasedFileFieldRequest, AliasedFileResponse } from './aliased-file-type';
 import { FilePageFieldRequest, FilePageResponse } from './file-page-type';
 import { FilePageChunk as PrismaFilePageChunk } from '@prisma/client';
 
 /** structs */
 
-export type FilePageChunkModel = PrismaFilePageChunk & { file?: FileModel; page?: FilePageModel };
+export type FilePageChunkModel = PrismaFilePageChunk & { file?: AliasedFileModel; page?: FilePageModel };
 
 export type FilePageChunkFieldRequest = {
   id?: boolean;
@@ -18,7 +18,7 @@ export type FilePageChunkFieldRequest = {
   chunkId?: boolean;
   startLineId?: boolean;
   endLineId?: boolean;
-  file?: FileFieldRequest;
+  file?: AliasedFileFieldRequest;
   page?: FilePageFieldRequest;
 };
 
@@ -31,7 +31,7 @@ export type FilePageChunkResponse = {
   chunkId?: number;
   startLineId?: number;
   endLineId?: number;
-  file?: FileResponse;
+  file?: AliasedFileResponse;
   page?: FilePageResponse;
 };
 

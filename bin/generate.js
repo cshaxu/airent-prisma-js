@@ -97,8 +97,9 @@ const NATIVE_PRISMA_TYPES = {
   Bytes: "Buffer",
 };
 
-function buildTableSchema(table, enums, refs) {
-  const { name: entityName } = table;
+function buildTableSchema(table, enums, refs, aliasMap) {
+  const { name: tableName } = table;
+  const entityName = aliasMap[tableName] ?? tableName;
 
   // build entity-level attributes
   const entity = {
@@ -149,7 +150,7 @@ function buildTableSchema(table, enums, refs) {
         existingTypeNames.add(rawTypeName);
       }
     } else {
-      const sourceTable = entityName;
+      const sourceTable = tableName;
       const targetTable = rawTypeName;
       const ref = refs.find((ref) =>
         sourceTable < targetTable
@@ -159,10 +160,11 @@ function buildTableSchema(table, enums, refs) {
       if (ref) {
         const source = ref.find((r) => r.table === sourceTable);
         const target = ref.find((r) => r.table === targetTable);
+        const targetEntityName = aliasMap[targetTable] ?? targetTable;
         if (target.relation === "*") {
-          field.type = `${targetTable}[]`;
+          field.type = `${targetEntityName}[]`;
         } else {
-          field.type = `${targetTable}${typeSuffix}`;
+          field.type = `${targetEntityName}${typeSuffix}`;
         }
         field.strategy = "association";
         field.sourceKeys = source.fields;
@@ -178,7 +180,7 @@ function buildTableSchema(table, enums, refs) {
   return entity;
 }
 
-async function loadTableSchemas(isVerbose) {
+async function loadTableSchemas(aliasMap, isVerbose) {
   const database = await loadDbml(PRISMA_DBML_FILE_PATH, isVerbose);
   const enums = new Set(
     database.schemas.flatMap((s) => s.enums).map((e) => e.name)
@@ -192,7 +194,7 @@ async function loadTableSchemas(isVerbose) {
       { table: b.tableName, fields: b.fieldNames, relation: b.relation },
     ]);
   const tables = database.schemas.flatMap((s) => s.tables);
-  return tables.map((table) => buildTableSchema(table, enums, refs));
+  return tables.map((table) => buildTableSchema(table, enums, refs, aliasMap));
 }
 
 function merge(inputSchema, tableSchema, isVerbose) {
@@ -200,14 +202,15 @@ function merge(inputSchema, tableSchema, isVerbose) {
     console.log(`[AIRENT-PRISMA/INFO] Merging schema ${tableSchema.name} ...`);
   }
   const {
-    name,
+    name: tableName,
     model: tableModel,
     prisma: tablePrisma,
     types: tableTypesRaw,
     fields: tableFieldsRaw,
   } = tableSchema;
   const {
-    name: _name,
+    name: _inputName,
+    aliasOf: _inputAliasOf,
     model: inputModel,
     prisma: inputPrismaRaw,
     types: inputTypesRaw,
@@ -244,66 +247,64 @@ function merge(inputSchema, tableSchema, isVerbose) {
   const tableTypes = tableTypesRaw.filter((f) => !inputTypeNames.has(f.name));
   const types = [...tableTypes, ...inputTypes];
 
-  return { name, model, prisma, ...extras, types, fields };
+  return { name: tableName, model, prisma, ...extras, types, fields };
 }
 
 function reconcile(inputSchemas, tableSchemas, isVerbose) {
   if (isVerbose) {
     console.log("[AIRENT-PRISMA/INFO] Reconciling schemas ...");
   }
-  const schemaNames = Array.from(
-    new Set([
-      ...tableSchemas.map((s) => s.name),
-      ...inputSchemas.map((s) => s.name),
-    ])
-  ).sort();
-  return schemaNames.map((schemaName) => {
-    const tableSchema = tableSchemas.find((s) => s.name === schemaName);
-    const inputSchema = inputSchemas.find((s) => s.name === schemaName);
-    const entity = !tableSchema
-      ? inputSchema
-      : !inputSchema
-      ? tableSchema
-      : merge(inputSchema, tableSchema, isVerbose);
+  const tableSchemaNames = tableSchemas.map((s) => s.name);
+  const inputSchemaNames = inputSchemas.map((s) => s.name);
+  return Array.from(new Set([...tableSchemaNames, ...inputSchemaNames]))
+    .sort()
+    .map((schemaName) => {
+      const tableSchema = tableSchemas.find((s) => s.name === schemaName);
+      const inputSchema = inputSchemas.find((s) => s.name === schemaName);
+      const entity = !tableSchema
+        ? inputSchema
+        : !inputSchema
+        ? tableSchema
+        : merge(inputSchema, tableSchema, isVerbose);
 
-    const entName = utils.toTitleCase(entity.name);
-    const modelDefinition =
-      entity.isPrisma === false ? entity.model : `Prisma${entName}`;
-    const modelName = `${entName}Model`;
+      const entName = utils.toTitleCase(entity.name);
+      const modelDefinition =
+        entity.isPrisma === false ? entity.model : `Prisma${entName}`;
+      const modelName = `${entName}Model`;
 
-    if (entity.isPrisma === false) {
-      entity.types.push({ name: modelName, define: modelDefinition });
-      entity.model = modelName;
+      if (entity.isPrisma === false) {
+        entity.types.push({ name: modelName, define: modelDefinition });
+        entity.model = modelName;
+        return entity;
+      }
+
+      // build prisma model definition
+      const prismaAssociationFields = entity.fields
+        .filter(utils.isAssociationField)
+        .filter((t) => t.isPrisma);
+      const prismaModelAssociationDefinitions = prismaAssociationFields.map(
+        (f) =>
+          `${f.name}?: ${utils.toTitleCase(
+            utils.toPrimitiveTypeName(f.type)
+          )}Model${
+            utils.isArrayField(f)
+              ? "[]"
+              : utils.isNullableField(f)
+              ? " | null"
+              : ""
+          }`
+      );
+      const prismaModelAssociationDefinitionsString =
+        prismaAssociationFields.length === 0
+          ? ""
+          : ` & { ${prismaModelAssociationDefinitions.join("; ")} }`;
+      const modelDefinitionWithAssociationFields = `${modelDefinition}${prismaModelAssociationDefinitionsString}`;
+      entity.types.push({
+        name: modelName,
+        define: modelDefinitionWithAssociationFields,
+      });
       return entity;
-    }
-
-    // build prisma model definition
-    const prismaAssociationFields = entity.fields
-      .filter(utils.isAssociationField)
-      .filter((t) => t.isPrisma);
-    const prismaModelAssociationDefinitions = prismaAssociationFields.map(
-      (f) =>
-        `${f.name}?: ${utils.toTitleCase(
-          utils.toPrimitiveTypeName(f.type)
-        )}Model${
-          utils.isArrayField(f)
-            ? "[]"
-            : utils.isNullableField(f)
-            ? " | null"
-            : ""
-        }`
-    );
-    const prismaModelAssociationDefinitionsString =
-      prismaAssociationFields.length === 0
-        ? ""
-        : ` & { ${prismaModelAssociationDefinitions.join("; ")} }`;
-    const modelDefinitionWithAssociationFields = `${modelDefinition}${prismaModelAssociationDefinitionsString}`;
-    entity.types.push({
-      name: modelName,
-      define: modelDefinitionWithAssociationFields,
     });
-    return entity;
-  });
 }
 
 async function generateOne(entity, outputPath, isVerbose) {
@@ -322,7 +323,11 @@ async function generate(argv) {
   // load config
   const config = await loadConfig(isVerbose);
   const inputSchemas = await loadSchemas(config.schemaPath, isVerbose);
-  const tableSchemas = await loadTableSchemas(isVerbose);
+  const aliasMap = inputSchemas.reduce((acc, entity) => {
+    acc[entity.aliasOf ?? entity.name] = entity.name;
+    return acc;
+  }, {});
+  const tableSchemas = await loadTableSchemas(aliasMap, isVerbose);
   const outputSchemas = reconcile(inputSchemas, tableSchemas, isVerbose);
 
   // Ensure the output directory exists

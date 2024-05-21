@@ -3,23 +3,23 @@ import { FilePageChunkModel } from './file-page-chunk-type';
 import { Select } from 'airent';
 import { FilePageFieldRequest, FilePageResponse } from './file-page-type';
 import { FilePageChunkFieldRequest, FilePageChunkResponse } from './file-page-chunk-type';
-import { File as PrismaFile } from '@prisma/client';
+import { AliasedFile as PrismaAliasedFile } from '@prisma/client';
 import { FileType as PrismaFileType } from '@prisma/client';
 
 /** structs */
 
-export type FileModel = PrismaFile & { pages?: FilePageModel[]; chunks?: FilePageChunkModel[] };
+export type AliasedFileModel = PrismaAliasedFile & { pages?: FilePageModel[]; chunks?: FilePageChunkModel[] };
 
-export type FileFieldRequest = {
+export type AliasedFileFieldRequest = {
   size?: boolean;
   type?: boolean;
   chunks?: FilePageChunkFieldRequest;
 };
 
-export type FileResponse = {
+export type AliasedFileResponse = {
   size?: number;
   type?: PrismaFileType;
   chunks?: FilePageChunkResponse[];
 };
 
-export type SelectedFileResponse<S extends FileFieldRequest> = Select<FileResponse, S>;
+export type SelectedAliasedFileResponse<S extends AliasedFileFieldRequest> = Select<AliasedFileResponse, S>;

@@ -1,4 +1,5 @@
-name: File
+name: AliasedFile
+aliasOf: File
 prisma:
   skipFields:
     - createdAt

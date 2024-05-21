@@ -1,7 +1,7 @@
 import { ValidatePrismaArgs, batchLoad, batchLoadTopMany } from '../../../src/index';
 import { Prisma } from '@prisma/client';
 import prisma from '@/lib/prisma';
-import { FileModel } from './file-type';
+import { AliasedFileModel } from './aliased-file-type';
 import { FilePageChunkModel } from './file-page-chunk-type';
 import {
   AsyncLock,
@@ -25,7 +25,7 @@ import {
 } from './file-page-type';
 
 /** associations */
-import { FileEntity } from '../file';
+import { AliasedFileEntity } from '../aliased-file';
 import { FilePageChunkEntity } from '../file-page-chunk';
 
 /** external types */
@@ -42,7 +42,7 @@ export class FilePageEntityBase extends BaseEntity<
   public pageId: number;
   public lines: PrismaJsonValue;
 
-  protected file?: FileEntity;
+  protected file?: AliasedFileEntity;
 
   protected chunks?: FilePageChunkEntity[];
 
@@ -89,7 +89,7 @@ export class FilePageEntityBase extends BaseEntity<
 
   /** associations */
 
-  protected fileLoadConfig: LoadConfig<FilePageEntityBase, FileEntity> = {
+  protected fileLoadConfig: LoadConfig<FilePageEntityBase, AliasedFileEntity> = {
     name: 'FilePageEntity.file',
     filter: (one: FilePageEntityBase) => one.file === undefined,
     getter: (sources: FilePageEntityBase[]) => {
@@ -99,10 +99,10 @@ export class FilePageEntityBase extends BaseEntity<
         }));
     },
     loader: async (keys: LoadKey[]) => {
-      const models = await batchLoad(prisma.file.findMany, keys, 1234);
-      return FileEntity.fromArray(models, this.context);
+      const models = await batchLoad(prisma.aliasedFile.findMany, keys, 1234);
+      return AliasedFileEntity.fromArray(models, this.context);
     },
-    setter: (sources: FilePageEntityBase[], targets: FileEntity[]) => {
+    setter: (sources: FilePageEntityBase[], targets: AliasedFileEntity[]) => {
       const map = toObjectMap(targets, (one) => JSON.stringify({ id: one.id }), (one) => one);
       sources.forEach((one) => {
         one.file = map.get(JSON.stringify({ id: one.fileId }))!;
@@ -110,7 +110,7 @@ export class FilePageEntityBase extends BaseEntity<
     },
   };
 
-  public async getFile(): Promise<FileEntity> {
+  public async getFile(): Promise<AliasedFileEntity> {
     if (this.file !== undefined) {
       return this.file;
     }
@@ -118,7 +118,7 @@ export class FilePageEntityBase extends BaseEntity<
     return this.file!;
   }
 
-  public setFile(file?: FileEntity): void {
+  public setFile(file?: AliasedFileEntity): void {
     this.file = file;
   }
 
@@ -158,7 +158,7 @@ export class FilePageEntityBase extends BaseEntity<
 
   protected initialize(model: FilePageModel, context: Context): void {
     if (model.file !== undefined) {
-      this.file = FileEntity.fromOne(model.file, context);
+      this.file = AliasedFileEntity.fromOne(model.file, context);
     }
     if (model.chunks !== undefined) {
       this.chunks = FilePageChunkEntity.fromArray(model.chunks, context);
