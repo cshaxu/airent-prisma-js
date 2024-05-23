@@ -1,12 +1,12 @@
 {
   "type": "commonjs",
-  "schemaPath": "./test-output/schemas",
-  "entityPath": "./test-output/entities",
+  "schemaPath": "test-output/schemas",
+  "entityPath": "test-output/entities",
   "contextImportPath": "./test-resources/context",
-  "augmentors": ["./resources/augmentor.js"],
+  "augmentors": ["resources/augmentor.js"],
   "prisma": {
     "libImportPath": "./src/index",
-    "extensionSchemaPath": "./test-schemas",
+    "extensionSchemaPath": "test-schemas",
     "prismaImport": "import prisma from '@/lib/prisma';",
     "prismaBatchSize": 1234
   }
