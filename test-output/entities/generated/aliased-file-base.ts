@@ -1,8 +1,9 @@
 import { ValidatePrismaArgs, batchLoad, batchLoadTopMany } from '../../../src/index';
 import { Prisma } from '@prisma/client';
-import prisma from '@/lib/prisma';
+import prisma from '../../../test-resources/prisma';
 import { FilePageModel } from './file-page-type';
 import { FilePageChunkModel } from './file-page-chunk-type';
+// airent imports
 import {
   AsyncLock,
   BaseEntity,
@@ -14,23 +15,21 @@ import {
   toArrayMap,
   toObjectMap,
 } from 'airent';
+
+// config imports
 import { Context } from '../../../test-resources/context';
 
-/** generated */
+// entity imports
+import { AliasedFile as PrismaAliasedFile } from '@prisma/client';
+import { FileType as PrismaFileType } from '@prisma/client';
+import { FilePageEntity } from '../file-page';
+import { FilePageChunkEntity } from '../file-page-chunk';
 import {
   AliasedFileFieldRequest,
   AliasedFileResponse,
   SelectedAliasedFileResponse,
   AliasedFileModel,
 } from './aliased-file-type';
-
-/** associations */
-import { FilePageEntity } from '../file-page';
-import { FilePageChunkEntity } from '../file-page-chunk';
-
-/** external types */
-import { AliasedFile as PrismaAliasedFile } from '@prisma/client';
-import { FileType as PrismaFileType } from '@prisma/client';
 
 export class AliasedFileEntityBase extends BaseEntity<
   AliasedFileModel, Context, AliasedFileFieldRequest, AliasedFileResponse

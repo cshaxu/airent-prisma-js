@@ -1,8 +1,9 @@
 import { ValidatePrismaArgs, batchLoad, batchLoadTopMany } from '../../../src/index';
 import { Prisma } from '@prisma/client';
-import prisma from '@/lib/prisma';
+import prisma from '../../../test-resources/prisma';
 import { AliasedFileModel } from './aliased-file-type';
 import { FilePageModel } from './file-page-type';
+// airent imports
 import {
   AsyncLock,
   BaseEntity,
@@ -14,22 +15,20 @@ import {
   toArrayMap,
   toObjectMap,
 } from 'airent';
+
+// config imports
 import { Context } from '../../../test-resources/context';
 
-/** generated */
+// entity imports
+import { FilePageChunk as PrismaFilePageChunk } from '@prisma/client';
+import { AliasedFileEntity } from '../aliased-file';
+import { FilePageEntity } from '../file-page';
 import {
   FilePageChunkFieldRequest,
   FilePageChunkResponse,
   SelectedFilePageChunkResponse,
   FilePageChunkModel,
 } from './file-page-chunk-type';
-
-/** associations */
-import { AliasedFileEntity } from '../aliased-file';
-import { FilePageEntity } from '../file-page';
-
-/** external types */
-import { FilePageChunk as PrismaFilePageChunk } from '@prisma/client';
 
 export class FilePageChunkEntityBase extends BaseEntity<
   FilePageChunkModel, Context, FilePageChunkFieldRequest, FilePageChunkResponse

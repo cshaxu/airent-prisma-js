@@ -1,9 +1,12 @@
 import { AliasedFileModel } from './aliased-file-type';
 import { FilePageModel } from './file-page-type';
+// airent imports
 import { Select } from 'airent';
+
+// entity imports
+import { FilePageChunk as PrismaFilePageChunk } from '@prisma/client';
 import { AliasedFileFieldRequest, AliasedFileResponse } from './aliased-file-type';
 import { FilePageFieldRequest, FilePageResponse } from './file-page-type';
-import { FilePageChunk as PrismaFilePageChunk } from '@prisma/client';
 
 /** structs */
 

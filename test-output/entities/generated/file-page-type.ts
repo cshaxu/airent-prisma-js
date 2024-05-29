@@ -1,10 +1,13 @@
 import { AliasedFileModel } from './aliased-file-type';
 import { FilePageChunkModel } from './file-page-chunk-type';
+// airent imports
 import { Select } from 'airent';
-import { AliasedFileFieldRequest, AliasedFileResponse } from './aliased-file-type';
-import { FilePageChunkFieldRequest, FilePageChunkResponse } from './file-page-chunk-type';
+
+// entity imports
 import { FilePage as PrismaFilePage } from '@prisma/client';
 import { JsonValue as PrismaJsonValue } from '@prisma/client/runtime/library';
+import { AliasedFileFieldRequest, AliasedFileResponse } from './aliased-file-type';
+import { FilePageChunkFieldRequest, FilePageChunkResponse } from './file-page-chunk-type';
 
 /** structs */
 
