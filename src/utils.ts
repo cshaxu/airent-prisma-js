@@ -2,6 +2,22 @@ import { omit } from "lodash";
 import { DEFAULT_BATCH_SIZE } from "./consts";
 import { LoadKey } from "./types";
 
+function getUpdatedFields<ENTITY>(
+  original: ENTITY,
+  updated: ENTITY,
+  primaryFields: string[],
+  dateFields: string[]
+): string[] {
+  const updatedPrimaryFields = primaryFields.filter(
+    (field) => (original as any)[field] !== (updated as any)[field]
+  );
+  const updatedDateFields = dateFields.filter(
+    (field) =>
+      (original as any)[field]?.getTime() !== (updated as any)[field]?.getTime()
+  );
+  return [...updatedPrimaryFields, ...updatedDateFields];
+}
+
 async function batchLoad<ENTITY>(
   loader: (query: any) => Promise<ENTITY[]>,
   keys: LoadKey[],
@@ -110,4 +126,4 @@ function buildWhere(loadKeys: LoadKey[], allowIn: boolean = true): LoadKey {
   return where;
 }
 
-export { batchLoad, batchLoadTopMany, buildWhere };
+export { batchLoad, batchLoadTopMany, buildWhere, getUpdatedFields };

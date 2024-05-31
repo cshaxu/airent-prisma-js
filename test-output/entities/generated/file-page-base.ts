@@ -1,6 +1,10 @@
-import { ValidatePrismaArgs, batchLoad, batchLoadTopMany } from '../../../src/index';
+// library imports
 import { Prisma } from '@prisma/client';
+// airent imports
+import { ValidatePrismaArgs, batchLoad, batchLoadTopMany, getUpdatedFields } from '../../../src/index';
+// config imports
 import prisma from '../../../test-resources/prisma';
+// entity imports
 import { AliasedFileModel } from './aliased-file-type';
 import { FilePageChunkModel } from './file-page-chunk-type';
 // airent imports
@@ -166,6 +170,18 @@ export class FilePageEntityBase extends BaseEntity<
 
   /** prisma wrappers */
 
+  public static count = prisma.filePage.count;
+
+  public static aggregate = prisma.filePage.aggregate;
+
+  public static groupBy = prisma.filePage.groupBy;
+
+  public static createMany = prisma.filePage.createMany;
+
+  public static updateMany = prisma.filePage.updateMany;
+
+  public static deleteMany = prisma.filePage.deleteMany;
+
   public static async findMany<
     ENTITY extends FilePageEntityBase,
     T extends Prisma.FilePageFindManyArgs,
@@ -177,7 +193,8 @@ export class FilePageEntityBase extends BaseEntity<
     const models = await prisma.filePage.findMany(
       args as unknown as Prisma.SelectSubset<T, Prisma.FilePageFindManyArgs>
     );
-    return (this as any).fromArray(models, context);
+    const many = (this as any).fromArray(models, context);
+    return many;
   }
 
   public static async findUnique<
@@ -188,11 +205,11 @@ export class FilePageEntityBase extends BaseEntity<
     args: ValidatePrismaArgs<T, Prisma.FilePageFindUniqueArgs>,
     context: Context,
   ): Promise<ENTITY | null> {
-    const model = await prisma.filePage.findUnique(args as unknown as Prisma.SelectSubset<T, Prisma.FilePageFindUniqueArgs>);
-    if (model === null) {
-      return null;
-    }
-    return (this as any).fromOne(model, context);
+    const model = await prisma.filePage.findUnique(
+      args as unknown as Prisma.SelectSubset<T, Prisma.FilePageFindUniqueArgs>
+    );
+    const one = model === null ? null : (this as any).fromOne(model, context) as ENTITY;
+    return one;
   }
 
   public static async findFirst<
@@ -203,11 +220,11 @@ export class FilePageEntityBase extends BaseEntity<
     args: ValidatePrismaArgs<T, Prisma.FilePageFindFirstArgs>,
     context: Context,
   ): Promise<ENTITY | null> {
-    const model = await prisma.filePage.findFirst(args as unknown as Prisma.SelectSubset<T, Prisma.FilePageFindFirstArgs>);
-    if (model === null) {
-      return null;
-    }
-    return (this as any).fromOne(model, context);
+    const model = await prisma.filePage.findFirst(
+      args as unknown as Prisma.SelectSubset<T, Prisma.FilePageFindFirstArgs>
+    );
+    const one = model === null ? null : (this as any).fromOne(model, context) as ENTITY;
+    return one;
   }
 
   public static async findUniqueOrThrow<
@@ -218,8 +235,11 @@ export class FilePageEntityBase extends BaseEntity<
     args: ValidatePrismaArgs<T, Prisma.FilePageFindUniqueOrThrowArgs>,
     context: Context,
   ): Promise<ENTITY> {
-    const model = await prisma.filePage.findUniqueOrThrow(args as unknown as Prisma.SelectSubset<T, Prisma.FilePageFindUniqueOrThrowArgs>);
-    return (this as any).fromOne(model, context);
+    const model = await prisma.filePage.findUniqueOrThrow(
+      args as unknown as Prisma.SelectSubset<T, Prisma.FilePageFindUniqueOrThrowArgs>
+    );
+    const one = (this as any).fromOne(model, context) as ENTITY;
+    return one;
   }
 
   public static async findFirstOrThrow<
@@ -230,8 +250,125 @@ export class FilePageEntityBase extends BaseEntity<
     args: ValidatePrismaArgs<T, Prisma.FilePageFindFirstOrThrowArgs>,
     context: Context,
   ): Promise<ENTITY> {
-    const model = await prisma.filePage.findFirstOrThrow(args as unknown as Prisma.SelectSubset<T, Prisma.FilePageFindFirstOrThrowArgs>);
-    return (this as any).fromOne(model, context);
+    const model = await prisma.filePage.findFirstOrThrow(
+      args as unknown as Prisma.SelectSubset<T, Prisma.FilePageFindFirstOrThrowArgs>
+    );
+    const one = (this as any).fromOne(model, context) as ENTITY;
+    return one;
+  }
+
+  protected static beforeCreate<ENTITY extends FilePageEntityBase>(
+    this: EntityConstructor<FilePageModel, Context, ENTITY>,
+    _context: Context
+  ): void | Promise<void> {}
+
+  protected static afterCreate<ENTITY extends FilePageEntityBase>(
+    this: EntityConstructor<FilePageModel, Context, ENTITY>,
+    _one: ENTITY,
+    _context: Context
+  ): void | Promise<void> {}
+
+  public static async create<
+    ENTITY extends FilePageEntityBase,
+    T extends Prisma.FilePageCreateArgs,
+  >(
+    this: EntityConstructor<FilePageModel, Context, ENTITY>,
+    args: ValidatePrismaArgs<T, Prisma.FilePageCreateArgs>,
+    context: Context,
+  ): Promise<ENTITY> {
+    await (this as any).beforeCreate(context);
+    const model = await prisma.filePage.create(
+      args as unknown as Prisma.SelectSubset<T, Prisma.FilePageCreateArgs>
+    );
+    const one = (this as any).fromOne(model, context) as ENTITY;
+    await (this as any).afterCreate(one, context);
+    return one;
+  }
+
+  protected static NON_DATE_PRIMITIVE_FIELDS = [
+    'id',
+    'fileId',
+    'pageId',
+    'lines',
+  ];
+
+  protected static DATE_PRIMITIVE_FIELDS = [
+    'createdAt',
+    'updatedAt',
+  ];
+
+  protected static beforeUpdate<ENTITY extends FilePageEntityBase>(
+    this: EntityConstructor<FilePageModel, Context, ENTITY>,
+    _oneBefore: ENTITY,
+    _context: Context
+  ): void | Promise<void> {}
+
+  protected static afterUpdate<ENTITY extends FilePageEntityBase>(
+    this: EntityConstructor<FilePageModel, Context, ENTITY>,
+    _oneBefore: ENTITY,
+    _oneAfter: ENTITY,
+   _updatedFields: string[],
+    _context: Context
+  ): void | Promise<void> {}
+
+  public static async update<
+    ENTITY extends FilePageEntityBase,
+    T extends Prisma.FilePageUpdateArgs,
+  >(
+    this: EntityConstructor<FilePageModel, Context, ENTITY>,
+    args: ValidatePrismaArgs<T, Prisma.FilePageUpdateArgs>,
+    context: Context,
+  ): Promise<ENTITY> {
+    const oneBefore = await (this as any).findUniqueOrThrow(
+      { where: args.where },
+      context
+    ) as ENTITY;
+    await (this as any).beforeUpdate(oneBefore, context);
+    const model = await prisma.filePage.update(
+      args as unknown as Prisma.SelectSubset<T, Prisma.FilePageUpdateArgs>
+    );
+    const one = (this as any).fromOne(model, context) as ENTITY;
+    const updatedFields = getUpdatedFields(
+      oneBefore,
+      one,
+      (this as any).NON_DATE_PRIMITIVE_FIELDS,
+      (this as any).DATE_PRIMITIVE_FIELDS
+    );
+    await (this as any).afterUpdate(oneBefore, one, updatedFields, context);
+    return one;
+  }
+
+  protected static beforeDelete<ENTITY extends FilePageEntityBase>(
+    this: EntityConstructor<FilePageModel, Context, ENTITY>,
+    _oneBefore: ENTITY,
+    _context: Context
+  ): void | Promise<void> {}
+
+  protected static afterDelete<ENTITY extends FilePageEntityBase>(
+    this: EntityConstructor<FilePageModel, Context, ENTITY>,
+    _oneBefore: ENTITY,
+    _context: Context
+  ): void | Promise<void> {}
+
+  public static async delete<
+    ENTITY extends FilePageEntityBase,
+    T extends Prisma.FilePageDeleteArgs,
+  >(
+    this: EntityConstructor<FilePageModel, Context, ENTITY>,
+    args: ValidatePrismaArgs<T, Prisma.FilePageDeleteArgs>,
+    context: Context,
+  ): Promise<ENTITY> {
+    const oneBefore = await (this as any).findUniqueOrThrow(
+      { where: args.where },
+      context
+    ) as ENTITY;
+    await (this as any).beforeDelete(oneBefore, context);
+    const model = await prisma.filePage.delete(
+      args as unknown as Prisma.SelectSubset<T, Prisma.FilePageDeleteArgs>
+    );
+    const one = (this as any).fromOne(model, context) as ENTITY;
+    await (this as any).afterDelete(oneBefore, context);
+    return one;
   }
 
   public static async upsert<
@@ -242,55 +379,30 @@ export class FilePageEntityBase extends BaseEntity<
     args: ValidatePrismaArgs<T, Prisma.FilePageUpsertArgs>,
     context: Context,
   ): Promise<ENTITY> {
-    const model = await prisma.filePage.upsert(args as unknown as Prisma.SelectSubset<T, Prisma.FilePageUpsertArgs>);
-    return (this as any).fromOne(model, context);
+    const oneBefore = await (this as any).findUnique(
+      { where: args.where },
+      context
+    ) as ENTITY;
+    if (oneBefore === null) {
+      await (this as any).beforeCreate(context);
+    } else {
+      await (this as any).beforeUpdate(oneBefore, context);
+    }
+    const model = await prisma.filePage.upsert(
+      args as unknown as Prisma.SelectSubset<T, Prisma.FilePageUpsertArgs>
+    );
+    const one = (this as any).fromOne(model, context) as ENTITY;
+    if (oneBefore === null) {
+      await (this as any).afterCreate(one, context);
+    } else {
+      const updatedFields = getUpdatedFields(
+        oneBefore,
+        one,
+        (this as any).NON_DATE_PRIMITIVE_FIELDS,
+        (this as any).DATE_PRIMITIVE_FIELDS
+      );
+      await (this as any).afterUpdate(oneBefore, one, updatedFields, context);
+    }
+    return one;
   }
-
-  public static async create<
-    ENTITY extends FilePageEntityBase,
-    T extends Prisma.FilePageCreateArgs,
-  >(
-    this: EntityConstructor<FilePageModel, Context, ENTITY>,
-    args: ValidatePrismaArgs<T, Prisma.FilePageCreateArgs>,
-    context: Context,
-  ): Promise<ENTITY> {
-    const model = await prisma.filePage.create(args as unknown as Prisma.SelectSubset<T, Prisma.FilePageCreateArgs>);
-    return (this as any).fromOne(model, context);
-  }
-
-  public static async update<
-    ENTITY extends FilePageEntityBase,
-    T extends Prisma.FilePageUpdateArgs,
-  >(
-    this: EntityConstructor<FilePageModel, Context, ENTITY>,
-    args: ValidatePrismaArgs<T, Prisma.FilePageUpdateArgs>,
-    context: Context,
-  ): Promise<ENTITY> {
-    const model = await prisma.filePage.update(args as unknown as Prisma.SelectSubset<T, Prisma.FilePageUpdateArgs>);
-    return (this as any).fromOne(model, context);
-  }
-
-  public static async delete<
-    ENTITY extends FilePageEntityBase,
-    T extends Prisma.FilePageDeleteArgs,
-  >(
-    this: EntityConstructor<FilePageModel, Context, ENTITY>,
-    args: ValidatePrismaArgs<T, Prisma.FilePageDeleteArgs>,
-    context: Context,
-  ): Promise<ENTITY> {
-    const model = await prisma.filePage.delete(args as unknown as Prisma.SelectSubset<T, Prisma.FilePageDeleteArgs>);
-    return (this as any).fromOne(model, context);
-  }
-
-  public static createMany = prisma.filePage.createMany;
-
-  public static updateMany = prisma.filePage.updateMany;
-
-  public static deleteMany = prisma.filePage.deleteMany;
-
-  public static count = prisma.filePage.count;
-
-  public static aggregate = prisma.filePage.aggregate;
-
-  public static groupBy = prisma.filePage.groupBy;
 }

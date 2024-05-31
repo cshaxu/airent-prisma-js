@@ -37,6 +37,7 @@
   ],
   "dependencies": {
     "@dbml/core": "^3.4.3",
+    "@prisma/client": "^5.14.0",
     "js-yaml": "^4.1.0",
     "lodash": "^4.17.21"
   },
@@ -47,6 +48,8 @@
     "@types/node": "^20.12.12",
     "airent": "github:cshaxu/airent-js#a6f2588537aa3ec22624aeedcecdae3a1169442f",
     "crlf": "^1.1.1",
+    "prisma": "^5.14.0",
+    "prisma-dbml-generator": "^0.12.0",
     "typescript": "^5.4.5"
   }
 }

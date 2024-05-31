@@ -1,6 +1,10 @@
-import { ValidatePrismaArgs, batchLoad, batchLoadTopMany } from '../../../src/index';
+// library imports
 import { Prisma } from '@prisma/client';
+// airent imports
+import { ValidatePrismaArgs, batchLoad, batchLoadTopMany, getUpdatedFields } from '../../../src/index';
+// config imports
 import prisma from '../../../test-resources/prisma';
+// entity imports
 import { FilePageModel } from './file-page-type';
 import { FilePageChunkModel } from './file-page-chunk-type';
 // airent imports
@@ -154,6 +158,18 @@ export class AliasedFileEntityBase extends BaseEntity<
 
   /** prisma wrappers */
 
+  public static count = prisma.aliasedFile.count;
+
+  public static aggregate = prisma.aliasedFile.aggregate;
+
+  public static groupBy = prisma.aliasedFile.groupBy;
+
+  public static createMany = prisma.aliasedFile.createMany;
+
+  public static updateMany = prisma.aliasedFile.updateMany;
+
+  public static deleteMany = prisma.aliasedFile.deleteMany;
+
   public static async findMany<
     ENTITY extends AliasedFileEntityBase,
     T extends Prisma.AliasedFileFindManyArgs,
@@ -165,7 +181,8 @@ export class AliasedFileEntityBase extends BaseEntity<
     const models = await prisma.aliasedFile.findMany(
       args as unknown as Prisma.SelectSubset<T, Prisma.AliasedFileFindManyArgs>
     );
-    return (this as any).fromArray(models, context);
+    const many = (this as any).fromArray(models, context);
+    return many;
   }
 
   public static async findUnique<
@@ -176,11 +193,11 @@ export class AliasedFileEntityBase extends BaseEntity<
     args: ValidatePrismaArgs<T, Prisma.AliasedFileFindUniqueArgs>,
     context: Context,
   ): Promise<ENTITY | null> {
-    const model = await prisma.aliasedFile.findUnique(args as unknown as Prisma.SelectSubset<T, Prisma.AliasedFileFindUniqueArgs>);
-    if (model === null) {
-      return null;
-    }
-    return (this as any).fromOne(model, context);
+    const model = await prisma.aliasedFile.findUnique(
+      args as unknown as Prisma.SelectSubset<T, Prisma.AliasedFileFindUniqueArgs>
+    );
+    const one = model === null ? null : (this as any).fromOne(model, context) as ENTITY;
+    return one;
   }
 
   public static async findFirst<
@@ -191,11 +208,11 @@ export class AliasedFileEntityBase extends BaseEntity<
     args: ValidatePrismaArgs<T, Prisma.AliasedFileFindFirstArgs>,
     context: Context,
   ): Promise<ENTITY | null> {
-    const model = await prisma.aliasedFile.findFirst(args as unknown as Prisma.SelectSubset<T, Prisma.AliasedFileFindFirstArgs>);
-    if (model === null) {
-      return null;
-    }
-    return (this as any).fromOne(model, context);
+    const model = await prisma.aliasedFile.findFirst(
+      args as unknown as Prisma.SelectSubset<T, Prisma.AliasedFileFindFirstArgs>
+    );
+    const one = model === null ? null : (this as any).fromOne(model, context) as ENTITY;
+    return one;
   }
 
   public static async findUniqueOrThrow<
@@ -206,8 +223,11 @@ export class AliasedFileEntityBase extends BaseEntity<
     args: ValidatePrismaArgs<T, Prisma.AliasedFileFindUniqueOrThrowArgs>,
     context: Context,
   ): Promise<ENTITY> {
-    const model = await prisma.aliasedFile.findUniqueOrThrow(args as unknown as Prisma.SelectSubset<T, Prisma.AliasedFileFindUniqueOrThrowArgs>);
-    return (this as any).fromOne(model, context);
+    const model = await prisma.aliasedFile.findUniqueOrThrow(
+      args as unknown as Prisma.SelectSubset<T, Prisma.AliasedFileFindUniqueOrThrowArgs>
+    );
+    const one = (this as any).fromOne(model, context) as ENTITY;
+    return one;
   }
 
   public static async findFirstOrThrow<
@@ -218,8 +238,122 @@ export class AliasedFileEntityBase extends BaseEntity<
     args: ValidatePrismaArgs<T, Prisma.AliasedFileFindFirstOrThrowArgs>,
     context: Context,
   ): Promise<ENTITY> {
-    const model = await prisma.aliasedFile.findFirstOrThrow(args as unknown as Prisma.SelectSubset<T, Prisma.AliasedFileFindFirstOrThrowArgs>);
-    return (this as any).fromOne(model, context);
+    const model = await prisma.aliasedFile.findFirstOrThrow(
+      args as unknown as Prisma.SelectSubset<T, Prisma.AliasedFileFindFirstOrThrowArgs>
+    );
+    const one = (this as any).fromOne(model, context) as ENTITY;
+    return one;
+  }
+
+  protected static beforeCreate<ENTITY extends AliasedFileEntityBase>(
+    this: EntityConstructor<AliasedFileModel, Context, ENTITY>,
+    _context: Context
+  ): void | Promise<void> {}
+
+  protected static afterCreate<ENTITY extends AliasedFileEntityBase>(
+    this: EntityConstructor<AliasedFileModel, Context, ENTITY>,
+    _one: ENTITY,
+    _context: Context
+  ): void | Promise<void> {}
+
+  public static async create<
+    ENTITY extends AliasedFileEntityBase,
+    T extends Prisma.AliasedFileCreateArgs,
+  >(
+    this: EntityConstructor<AliasedFileModel, Context, ENTITY>,
+    args: ValidatePrismaArgs<T, Prisma.AliasedFileCreateArgs>,
+    context: Context,
+  ): Promise<ENTITY> {
+    await (this as any).beforeCreate(context);
+    const model = await prisma.aliasedFile.create(
+      args as unknown as Prisma.SelectSubset<T, Prisma.AliasedFileCreateArgs>
+    );
+    const one = (this as any).fromOne(model, context) as ENTITY;
+    await (this as any).afterCreate(one, context);
+    return one;
+  }
+
+  protected static NON_DATE_PRIMITIVE_FIELDS = [
+    'size',
+    'type',
+    'id',
+  ];
+
+  protected static DATE_PRIMITIVE_FIELDS = [
+  ];
+
+  protected static beforeUpdate<ENTITY extends AliasedFileEntityBase>(
+    this: EntityConstructor<AliasedFileModel, Context, ENTITY>,
+    _oneBefore: ENTITY,
+    _context: Context
+  ): void | Promise<void> {}
+
+  protected static afterUpdate<ENTITY extends AliasedFileEntityBase>(
+    this: EntityConstructor<AliasedFileModel, Context, ENTITY>,
+    _oneBefore: ENTITY,
+    _oneAfter: ENTITY,
+   _updatedFields: string[],
+    _context: Context
+  ): void | Promise<void> {}
+
+  public static async update<
+    ENTITY extends AliasedFileEntityBase,
+    T extends Prisma.AliasedFileUpdateArgs,
+  >(
+    this: EntityConstructor<AliasedFileModel, Context, ENTITY>,
+    args: ValidatePrismaArgs<T, Prisma.AliasedFileUpdateArgs>,
+    context: Context,
+  ): Promise<ENTITY> {
+    const oneBefore = await (this as any).findUniqueOrThrow(
+      { where: args.where },
+      context
+    ) as ENTITY;
+    await (this as any).beforeUpdate(oneBefore, context);
+    const model = await prisma.aliasedFile.update(
+      args as unknown as Prisma.SelectSubset<T, Prisma.AliasedFileUpdateArgs>
+    );
+    const one = (this as any).fromOne(model, context) as ENTITY;
+    const updatedFields = getUpdatedFields(
+      oneBefore,
+      one,
+      (this as any).NON_DATE_PRIMITIVE_FIELDS,
+      (this as any).DATE_PRIMITIVE_FIELDS
+    );
+    await (this as any).afterUpdate(oneBefore, one, updatedFields, context);
+    return one;
+  }
+
+  protected static beforeDelete<ENTITY extends AliasedFileEntityBase>(
+    this: EntityConstructor<AliasedFileModel, Context, ENTITY>,
+    _oneBefore: ENTITY,
+    _context: Context
+  ): void | Promise<void> {}
+
+  protected static afterDelete<ENTITY extends AliasedFileEntityBase>(
+    this: EntityConstructor<AliasedFileModel, Context, ENTITY>,
+    _oneBefore: ENTITY,
+    _context: Context
+  ): void | Promise<void> {}
+
+  public static async delete<
+    ENTITY extends AliasedFileEntityBase,
+    T extends Prisma.AliasedFileDeleteArgs,
+  >(
+    this: EntityConstructor<AliasedFileModel, Context, ENTITY>,
+    args: ValidatePrismaArgs<T, Prisma.AliasedFileDeleteArgs>,
+    context: Context,
+  ): Promise<ENTITY> {
+    const oneBefore = await (this as any).findUniqueOrThrow(
+      { where: args.where },
+      context
+    ) as ENTITY;
+    await (this as any).beforeDelete(oneBefore, context);
+    const model = await prisma.aliasedFile.delete(
+      args as unknown as Prisma.SelectSubset<T, Prisma.AliasedFileDeleteArgs>
+    );
+    const one = (this as any).fromOne(model, context) as ENTITY;
+    await (this as any).afterDelete(oneBefore, context);
+    return one;
   }
 
   public static async upsert<
@@ -230,55 +364,30 @@ export class AliasedFileEntityBase extends BaseEntity<
     args: ValidatePrismaArgs<T, Prisma.AliasedFileUpsertArgs>,
     context: Context,
   ): Promise<ENTITY> {
-    const model = await prisma.aliasedFile.upsert(args as unknown as Prisma.SelectSubset<T, Prisma.AliasedFileUpsertArgs>);
-    return (this as any).fromOne(model, context);
+    const oneBefore = await (this as any).findUnique(
+      { where: args.where },
+      context
+    ) as ENTITY;
+    if (oneBefore === null) {
+      await (this as any).beforeCreate(context);
+    } else {
+      await (this as any).beforeUpdate(oneBefore, context);
+    }
+    const model = await prisma.aliasedFile.upsert(
+      args as unknown as Prisma.SelectSubset<T, Prisma.AliasedFileUpsertArgs>
+    );
+    const one = (this as any).fromOne(model, context) as ENTITY;
+    if (oneBefore === null) {
+      await (this as any).afterCreate(one, context);
+    } else {
+      const updatedFields = getUpdatedFields(
+        oneBefore,
+        one,
+        (this as any).NON_DATE_PRIMITIVE_FIELDS,
+        (this as any).DATE_PRIMITIVE_FIELDS
+      );
+      await (this as any).afterUpdate(oneBefore, one, updatedFields, context);
+    }
+    return one;
   }
-
-  public static async create<
-    ENTITY extends AliasedFileEntityBase,
-    T extends Prisma.AliasedFileCreateArgs,
-  >(
-    this: EntityConstructor<AliasedFileModel, Context, ENTITY>,
-    args: ValidatePrismaArgs<T, Prisma.AliasedFileCreateArgs>,
-    context: Context,
-  ): Promise<ENTITY> {
-    const model = await prisma.aliasedFile.create(args as unknown as Prisma.SelectSubset<T, Prisma.AliasedFileCreateArgs>);
-    return (this as any).fromOne(model, context);
-  }
-
-  public static async update<
-    ENTITY extends AliasedFileEntityBase,
-    T extends Prisma.AliasedFileUpdateArgs,
-  >(
-    this: EntityConstructor<AliasedFileModel, Context, ENTITY>,
-    args: ValidatePrismaArgs<T, Prisma.AliasedFileUpdateArgs>,
-    context: Context,
-  ): Promise<ENTITY> {
-    const model = await prisma.aliasedFile.update(args as unknown as Prisma.SelectSubset<T, Prisma.AliasedFileUpdateArgs>);
-    return (this as any).fromOne(model, context);
-  }
-
-  public static async delete<
-    ENTITY extends AliasedFileEntityBase,
-    T extends Prisma.AliasedFileDeleteArgs,
-  >(
-    this: EntityConstructor<AliasedFileModel, Context, ENTITY>,
-    args: ValidatePrismaArgs<T, Prisma.AliasedFileDeleteArgs>,
-    context: Context,
-  ): Promise<ENTITY> {
-    const model = await prisma.aliasedFile.delete(args as unknown as Prisma.SelectSubset<T, Prisma.AliasedFileDeleteArgs>);
-    return (this as any).fromOne(model, context);
-  }
-
-  public static createMany = prisma.aliasedFile.createMany;
-
-  public static updateMany = prisma.aliasedFile.updateMany;
-
-  public static deleteMany = prisma.aliasedFile.deleteMany;
-
-  public static count = prisma.aliasedFile.count;
-
-  public static aggregate = prisma.aliasedFile.aggregate;
-
-  public static groupBy = prisma.aliasedFile.groupBy;
 }

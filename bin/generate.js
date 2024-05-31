@@ -226,19 +226,23 @@ function merge(inputSchema, tableSchema, isVerbose) {
   const prisma = { ...tablePrisma, ...inputPrisma };
 
   // build fields
-  const inputFields = inputFieldsRaw ?? [];
-  const inputFieldNames = new Set(inputFields.map((f) => f.name));
-  const internalPrismaFields = inputPrisma?.internalFields ?? [];
+  const tableFieldNames = new Set((tableFieldsRaw ?? []).map((f) => f.name));
+  const inputFieldNames = new Set((inputFieldsRaw ?? []).map((f) => f.name));
+  const internalPrismaFields = new Set(inputPrisma?.internalFields ?? []);
   const tableFields = tableFieldsRaw
     .map((f) => ({
       ...f,
-      ...(internalPrismaFields.includes(f.name) && { internal: true }),
+      ...(internalPrismaFields.has(f.name) && { internal: true }),
     }))
     .filter(
       (f) =>
         !inputFieldNames.has(f.name) &&
         inputPrisma?.skipFields?.includes(f.name) !== true
     );
+  const inputFields = (inputFieldsRaw ?? []).map((f) => ({
+    ...f,
+    ...(tableFieldNames.has(f.name) && { isPrisma: true }),
+  }));
   const fields = [...tableFields, ...inputFields];
 
   // build types

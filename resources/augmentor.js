@@ -43,17 +43,27 @@ function augmentConfig(config) /* void */ {
 // build entity.code.beforeBase
 
 function buildBeforeBase(entity, config) /* Code[] */ {
-  const requiredImports = [
-    `import { ValidatePrismaArgs, batchLoad, batchLoadTopMany } from '${config.prisma.baseLibPackage}';`,
-  ];
+  const libraryImports = [];
   if (entity.isPrisma !== false) {
-    requiredImports.push("import { Prisma } from '@prisma/client';");
+    libraryImports.push("// library imports");
+    libraryImports.push("import { Prisma } from '@prisma/client';");
   }
-  const prismaImport =
+  const airentImports = [
+    "// airent imports",
+    `import { ValidatePrismaArgs, batchLoad, batchLoadTopMany, getUpdatedFields } from '${config.prisma.baseLibPackage}';`,
+  ];
+  const configImports = [
+    "// config imports",
     JSON.parse(JSON.stringify(config.prisma.prismaImport)) ??
-    "import prisma from 'TODO: specify prismaImport in your airent config';";
+      "import prisma from 'TODO: specify prismaImport in your airent config';",
+  ];
 
-  return [...requiredImports, prismaImport, ...buildModelImports(entity)];
+  return [
+    ...libraryImports,
+    ...airentImports,
+    ...configImports,
+    ...buildModelImports(entity),
+  ];
 }
 
 // build entity.code.beforeType
@@ -62,122 +72,31 @@ function buildBeforeType(entity) /* Code[] */ {
 }
 
 function buildModelImports(entity) /* Code[] */ {
-  const prismaAssociationFields = entity.fields
+  const prismaAssociationTypes = entity.fields
     .filter(utils.isAssociationField)
-    .filter((f) => f.isPrisma);
-  return prismaAssociationFields
-    .map((f) => f._type)
-    .map(
-      (t) =>
-        `import { ${utils.toTitleCase(t.name)}Model } from './${
-          t.strings.typePackage
-        }';`
-    );
+    .filter((f) => f.isPrisma)
+    .map((f) => f._type);
+  const addedTypeNames = new Set();
+  if (prismaAssociationTypes.length === 0) {
+    return [];
+  }
+  const modelImports = prismaAssociationTypes
+    .map((t) => {
+      if (addedTypeNames.has(t.name)) {
+        return "";
+      }
+      addedTypeNames.add(t.name);
+      return `import { ${utils.toTitleCase(t.name)}Model } from './${
+        t.strings.typePackage
+      }';`;
+    })
+    .filter((line) => line.length > 0);
+  return ["// entity imports", ...modelImports];
 }
 
 // build entity.code.insideBase
 
-function buildPrismaArgName(entity, prismaMethod) /* Code */ {
-  return `Prisma.${utils.toTitleCase(entity.name)}${utils.toTitleCase(
-    prismaMethod
-  )}Args`;
-}
-
-function buildPrismaMethodSignatureLines(
-  config,
-  entity,
-  prismaMethod,
-  typeSuffix
-) /* Code[] */ {
-  const prismaArgName = buildPrismaArgName(entity, prismaMethod);
-  return [
-    "",
-    `public static async ${prismaMethod}<`,
-    `  ENTITY extends ${entity.strings.baseClass},`,
-    `  T extends ${prismaArgName},`,
-    ">(",
-    `  this: EntityConstructor<${entity.model}, Context, ENTITY>,`,
-    `  args: ValidatePrismaArgs<T, ${prismaArgName}>,`,
-    "  context: Context,",
-    `): Promise<ENTITY${typeSuffix}> {`,
-  ];
-}
-
-function buildPrismaManyMethodLines(entity, config, prismaMethod) /* Code[] */ {
-  const prismaModelName = utils.toCamelCase(entity.name);
-  const prismaArgName = buildPrismaArgName(entity, prismaMethod);
-  const beforeLines = buildPrismaMethodSignatureLines(
-    config,
-    entity,
-    prismaMethod,
-    "[]"
-  );
-  const afterLines = [
-    "  return (this as any).fromArray(models, context);",
-    "}",
-  ];
-
-  const prismaLoaderLines = [
-    `  const models = await prisma.${prismaModelName}.${prismaMethod}(`,
-    `    args as unknown as Prisma.SelectSubset<T, ${prismaArgName}>`,
-    "  );",
-  ];
-
-  return [...beforeLines, ...prismaLoaderLines, ...afterLines];
-}
-
-function buildPrismaOneMethodLines(
-  config,
-  entity,
-  prismaMethod,
-  isNullable
-) /* Code[] */ {
-  const prismaModelName = utils.toCamelCase(entity.name);
-  const prismaArgName = buildPrismaArgName(entity, prismaMethod);
-
-  const beforeLines = buildPrismaMethodSignatureLines(
-    config,
-    entity,
-    prismaMethod,
-    isNullable ? " | null" : ""
-  );
-  const afterLines = ["  return (this as any).fromOne(model, context);", "}"];
-
-  const prismaLoaderLines = [
-    `  const model = await prisma.${prismaModelName}.${prismaMethod}(args as unknown as Prisma.SelectSubset<T, ${prismaArgName}>);`,
-    ...(isNullable
-      ? [`  if (model === null) {`, "    return null;", "  }"]
-      : []),
-  ];
-
-  return [...beforeLines, ...prismaLoaderLines, ...afterLines];
-}
-
-function buildPrismaNullableOneMethodLines(
-  config,
-  entity,
-  prismaMethod
-) /* Code[] */ {
-  return buildPrismaOneMethodLines(entity, config, prismaMethod, true);
-}
-
-function buildPrismaNonNullableOneMethodLines(
-  config,
-  entity,
-  prismaMethod
-) /* Code[] */ {
-  return buildPrismaOneMethodLines(entity, config, prismaMethod, false);
-}
-
-function buildPrismaPassThruMethodLines(entity, prismaMethod) /* Code[] */ {
-  const prismaModelName = utils.toCamelCase(entity.name);
-  return [
-    "",
-    `public static ${prismaMethod} = prisma.${prismaModelName}.${prismaMethod};`,
-  ];
-}
-
-function buildInitializeMethodLines(entity, config) /* Code[] */ {
+function buildInitializeMethodLines(entity) /* Code[] */ {
   const lines = entity.fields
     .filter(utils.isAssociationField)
     .filter((f) => f.isPrisma)
@@ -202,41 +121,297 @@ function buildInitializeMethodLines(entity, config) /* Code[] */ {
   ];
 }
 
-function buildInsideBase(entity, config) /* Code[] */ {
+function buildPrismaPassThruMethodLines(entity, prismaMethod) /* Code[] */ {
+  const prismaModelName = utils.toCamelCase(entity.name);
+  return [
+    "",
+    `public static ${prismaMethod} = prisma.${prismaModelName}.${prismaMethod};`,
+  ];
+}
+
+function buildPrismaArgName(entity, prismaMethod) /* Code */ {
+  return `Prisma.${utils.toTitleCase(entity.name)}${utils.toTitleCase(
+    prismaMethod
+  )}Args`;
+}
+
+function buildPrismaMethodSignatureLines(
+  entity,
+  prismaMethod,
+  typeSuffix
+) /* Code[] */ {
+  const prismaArgName = buildPrismaArgName(entity, prismaMethod);
+  return [
+    "",
+    `public static async ${prismaMethod}<`,
+    `  ENTITY extends ${entity.strings.baseClass},`,
+    `  T extends ${prismaArgName},`,
+    ">(",
+    `  this: EntityConstructor<${entity.model}, Context, ENTITY>,`,
+    `  args: ValidatePrismaArgs<T, ${prismaArgName}>,`,
+    "  context: Context,",
+    `): Promise<ENTITY${typeSuffix}> {`,
+  ];
+}
+
+function buildPrismaManyMethodLines(entity, prismaMethod) /* Code[] */ {
+  const prismaModelName = utils.toCamelCase(entity.name);
+  const prismaArgName = buildPrismaArgName(entity, prismaMethod);
+  const signatureLines = buildPrismaMethodSignatureLines(
+    entity,
+    prismaMethod,
+    "[]"
+  );
+  const returnLines = ["  return many;", "}"];
+
+  const executionLines = [
+    `  const models = await prisma.${prismaModelName}.${prismaMethod}(`,
+    `    args as unknown as Prisma.SelectSubset<T, ${prismaArgName}>`,
+    "  );",
+    "  const many = (this as any).fromArray(models, context);",
+  ];
+
+  return [...signatureLines, ...executionLines, ...returnLines];
+}
+
+function buildPrismaOneMethodLines(
+  entity,
+  prismaMethod,
+  isNullable,
+  beforeExecutionLines = [],
+  afterExecutionLines = []
+) /* Code[] */ {
+  const prismaModelName = utils.toCamelCase(entity.name);
+  const prismaArgName = buildPrismaArgName(entity, prismaMethod);
+
+  const signatureLines = buildPrismaMethodSignatureLines(
+    entity,
+    prismaMethod,
+    isNullable ? " | null" : ""
+  );
+  const returnLines = ["  return one;", "}"];
+
+  const executionLines = [
+    `  const model = await prisma.${prismaModelName}.${prismaMethod}(`,
+    `    args as unknown as Prisma.SelectSubset<T, ${prismaArgName}>`,
+    "  );",
+    `  const one = ${
+      isNullable ? "model === null ? null : " : ""
+    }(this as any).fromOne(model, context) as ENTITY;`,
+  ];
+
+  return [
+    ...signatureLines,
+    ...beforeExecutionLines.map((line) => `  ${line}`),
+    ...executionLines,
+    ...afterExecutionLines.map((line) => `  ${line}`),
+    ...returnLines,
+  ];
+}
+
+function buildPrismaNullableReadOneMethodLines(
+  entity,
+  prismaMethod
+) /* Code[] */ {
+  return buildPrismaOneMethodLines(entity, prismaMethod, true);
+}
+
+function buildPrismaNonNullableReadOneMethodLines(
+  entity,
+  prismaMethod
+) /* Code[] */ {
+  return buildPrismaOneMethodLines(entity, prismaMethod, false);
+}
+
+function buildOneBeforeLines(isThrow) {
+  return [
+    `const oneBefore = await (this as any).findUnique${
+      isThrow ? "OrThrow" : ""
+    }(`,
+    "  { where: args.where },",
+    "  context",
+    ") as ENTITY;",
+  ];
+}
+
+const BEFORE_CREATE_LINES = ["await (this as any).beforeCreate(context);"];
+const AFTER_CREATE_LINES = ["await (this as any).afterCreate(one, context);"];
+
+function buildPrismaCreateOneMethodLines(entity) /* Code[] */ {
+  const beforeAndAfterHooksLines = [
+    "",
+    `protected static beforeCreate<ENTITY extends ${entity.strings.baseClass}>(`,
+    `  this: EntityConstructor<${entity.model}, Context, ENTITY>,`,
+    "  _context: Context",
+    "): void | Promise<void> {}",
+    "",
+    `protected static afterCreate<ENTITY extends ${entity.strings.baseClass}>(`,
+    `  this: EntityConstructor<${entity.model}, Context, ENTITY>,`,
+    "  _one: ENTITY,",
+    "  _context: Context",
+    "): void | Promise<void> {}",
+  ];
+
+  const prismaOneMethodLines = buildPrismaOneMethodLines(
+    entity,
+    "create",
+    false,
+    BEFORE_CREATE_LINES,
+    AFTER_CREATE_LINES
+  );
+
+  return [...beforeAndAfterHooksLines, ...prismaOneMethodLines];
+}
+
+const BEFORE_UPDATE_LINES = [
+  ...buildOneBeforeLines(true),
+  "await (this as any).beforeUpdate(oneBefore, context);",
+];
+const AFTER_UPDATE_LINES = [
+  "const updatedFields = getUpdatedFields(",
+  "  oneBefore,",
+  "  one,",
+  "  (this as any).NON_DATE_PRIMITIVE_FIELDS,",
+  "  (this as any).DATE_PRIMITIVE_FIELDS",
+  ");",
+  "await (this as any).afterUpdate(oneBefore, one, updatedFields, context);",
+];
+
+function buildPrismaUpdateOneMethodLines(entity) /* Code[] */ {
+  const beforeAndAfterHooksLines = [
+    "",
+    "protected static NON_DATE_PRIMITIVE_FIELDS = [",
+    ...entity.fields
+      .filter(utils.isPrimitiveField)
+      .filter((f) => f.strings.fieldClass !== "Date")
+      .map((f) => `  '${f.name}',`),
+    "];",
+    "",
+    "protected static DATE_PRIMITIVE_FIELDS = [",
+    ...entity.fields
+      .filter(utils.isPrimitiveField)
+      .filter((f) => f.strings.fieldClass === "Date")
+      .map((f) => `  '${f.name}',`),
+    "];",
+    "",
+    `protected static beforeUpdate<ENTITY extends ${entity.strings.baseClass}>(`,
+    `  this: EntityConstructor<${entity.model}, Context, ENTITY>,`,
+    "  _oneBefore: ENTITY,",
+    "  _context: Context",
+    "): void | Promise<void> {}",
+    "",
+    `protected static afterUpdate<ENTITY extends ${entity.strings.baseClass}>(`,
+    `  this: EntityConstructor<${entity.model}, Context, ENTITY>,`,
+    "  _oneBefore: ENTITY,",
+    "  _oneAfter: ENTITY,",
+    " _updatedFields: string[],",
+    "  _context: Context",
+    "): void | Promise<void> {}",
+  ];
+
+  const prismaOneMethodLines = buildPrismaOneMethodLines(
+    entity,
+    "update",
+    false,
+    BEFORE_UPDATE_LINES,
+    AFTER_UPDATE_LINES
+  );
+
+  return [...beforeAndAfterHooksLines, ...prismaOneMethodLines];
+}
+
+const BEFORE_DELETE_LINES = [
+  ...buildOneBeforeLines(true),
+  "await (this as any).beforeDelete(oneBefore, context);",
+];
+const AFTER_DELETE_LINES = [
+  "await (this as any).afterDelete(oneBefore, context);",
+];
+
+function buildPrismaDeleteOneMethodLines(entity) /* Code[] */ {
+  const beforeAndAfterHooksLines = [
+    "",
+    `protected static beforeDelete<ENTITY extends ${entity.strings.baseClass}>(`,
+    `  this: EntityConstructor<${entity.model}, Context, ENTITY>,`,
+    "  _oneBefore: ENTITY,",
+    "  _context: Context",
+    "): void | Promise<void> {}",
+    "",
+    `protected static afterDelete<ENTITY extends ${entity.strings.baseClass}>(`,
+    `  this: EntityConstructor<${entity.model}, Context, ENTITY>,`,
+    "  _oneBefore: ENTITY,",
+    "  _context: Context",
+    "): void | Promise<void> {}",
+  ];
+
+  const prismaOneMethodLines = buildPrismaOneMethodLines(
+    entity,
+    "delete",
+    false,
+    BEFORE_DELETE_LINES,
+    AFTER_DELETE_LINES
+  );
+
+  return [...beforeAndAfterHooksLines, ...prismaOneMethodLines];
+}
+
+function buildPrismaUpsertOneMethodLines(entity) /* Code[] */ {
+  const beforeExecutionLines = [
+    ...buildOneBeforeLines(false),
+    "if (oneBefore === null) {",
+    ...BEFORE_CREATE_LINES.map((line) => `  ${line}`),
+    "} else {",
+    "  await (this as any).beforeUpdate(oneBefore, context);",
+    "}",
+  ];
+  const afterExecutionLines = [
+    "if (oneBefore === null) {",
+    ...AFTER_CREATE_LINES.map((line) => `  ${line}`),
+    "} else {",
+    ...AFTER_UPDATE_LINES.map((line) => `  ${line}`),
+    "}",
+  ];
+  return buildPrismaOneMethodLines(
+    entity,
+    "upsert",
+    false,
+    beforeExecutionLines,
+    afterExecutionLines
+  );
+}
+
+function buildInsideBase(entity) /* Code[] */ {
   if (entity.isPrisma === false) {
     return [];
   }
-  const nullableOneMethods = ["findUnique", "findFirst"];
-  const nonNullableOneMethods = [
-    "findUniqueOrThrow",
-    "findFirstOrThrow",
-    "upsert",
-    "create",
-    "update",
-    "delete",
-  ];
   const passThruMethods = [
-    "createMany",
-    "updateMany",
-    "deleteMany",
     "count",
     "aggregate",
     "groupBy",
+    "createMany",
+    "updateMany",
+    "deleteMany",
   ];
+  const nullableReadOneMethods = ["findUnique", "findFirst"];
+  const nonNullableReadOneMethods = ["findUniqueOrThrow", "findFirstOrThrow"];
   return [
-    ...buildInitializeMethodLines(entity, config),
+    ...buildInitializeMethodLines(entity),
     "",
     "/** prisma wrappers */",
-    ...buildPrismaManyMethodLines(entity, config, "findMany"),
-    ...nullableOneMethods.flatMap((n) =>
-      buildPrismaNullableOneMethodLines(entity, config, n)
-    ),
-    ...nonNullableOneMethods.flatMap((n) =>
-      buildPrismaNonNullableOneMethodLines(entity, config, n)
-    ),
     ...passThruMethods.flatMap((n) =>
       buildPrismaPassThruMethodLines(entity, n)
     ),
+    ...buildPrismaManyMethodLines(entity, "findMany"),
+    ...nullableReadOneMethods.flatMap((n) =>
+      buildPrismaNullableReadOneMethodLines(entity, n)
+    ),
+    ...nonNullableReadOneMethods.flatMap((n) =>
+      buildPrismaNonNullableReadOneMethodLines(entity, n)
+    ),
+    ...buildPrismaCreateOneMethodLines(entity),
+    ...buildPrismaUpdateOneMethodLines(entity),
+    ...buildPrismaDeleteOneMethodLines(entity),
+    ...buildPrismaUpsertOneMethodLines(entity),
   ];
 }
 
@@ -307,7 +482,7 @@ function augmentOne(entity, config, isVerbose) /* void */ {
   }
 
   const prismaBeforeBase = buildBeforeBase(entity, config);
-  const prismaInsideBase = buildInsideBase(entity, config);
+  const prismaInsideBase = buildInsideBase(entity);
   const prismaBeforeType = buildBeforeType(entity);
   entity.code.beforeBase.push(...prismaBeforeBase);
   entity.code.insideBase.push(...prismaInsideBase);

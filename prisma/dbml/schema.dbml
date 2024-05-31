@@ -1,3 +1,7 @@
+//// ------------------------------------------------------
+//// THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+//// ------------------------------------------------------
+
 Table File {
   id String [pk]
   createdAt DateTime [default: `now()`, not null]
