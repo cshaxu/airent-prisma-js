@@ -314,7 +314,7 @@ export class FilePageChunkEntityBase extends BaseEntity<
     this: EntityConstructor<FilePageChunkModel, Context, ENTITY>,
     _oneBefore: ENTITY,
     _oneAfter: ENTITY,
-   _updatedFields: string[],
+    _updatedFields: string[],
     _context: Context
   ): void | Promise<void> {}
 

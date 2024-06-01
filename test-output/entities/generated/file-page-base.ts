@@ -307,7 +307,7 @@ export class FilePageEntityBase extends BaseEntity<
     this: EntityConstructor<FilePageModel, Context, ENTITY>,
     _oneBefore: ENTITY,
     _oneAfter: ENTITY,
-   _updatedFields: string[],
+    _updatedFields: string[],
     _context: Context
   ): void | Promise<void> {}
 
