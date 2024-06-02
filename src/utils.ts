@@ -2,22 +2,6 @@ import { omit } from "lodash";
 import { DEFAULT_BATCH_SIZE } from "./consts";
 import { LoadKey } from "./types";
 
-function getUpdatedFields<ENTITY>(
-  original: ENTITY,
-  updated: ENTITY,
-  primaryFields: string[],
-  dateFields: string[]
-): string[] {
-  const updatedPrimaryFields = primaryFields.filter(
-    (field) => (original as any)[field] !== (updated as any)[field]
-  );
-  const updatedDateFields = dateFields.filter(
-    (field) =>
-      (original as any)[field]?.getTime() !== (updated as any)[field]?.getTime()
-  );
-  return [...updatedPrimaryFields, ...updatedDateFields];
-}
-
 async function batchLoad<ENTITY>(
   loader: (query: any) => Promise<ENTITY[]>,
   keys: LoadKey[],
@@ -124,6 +108,33 @@ function buildWhere(loadKeys: LoadKey[], allowIn: boolean = true): LoadKey {
   }
   where["OR"] = loadKeys.map((loadKey) => omit(loadKey, singleKeys));
   return where;
+}
+
+function getUpdatedFields<ENTITY>(
+  original: ENTITY,
+  updated: ENTITY,
+  fields: string[]
+): string[] {
+  return fields.filter((field) => {
+    const value1 = (original as any)[field];
+    const value2 = (updated as any)[field];
+    // same value, not updated
+    if (value1 === value2) {
+      return false;
+    }
+    const type1 = typeof value1;
+    const type2 = typeof value2;
+    // different value and different type, is updated
+    if (type1 !== type2) {
+      return true;
+    }
+    // different value and same type non-object, is updated (e.g. string, number, boolean)
+    if (type1 !== "object") {
+      return true;
+    }
+    // different value and both are objects, depends on deep comparison (e.g. [])
+    return JSON.stringify(value1) !== JSON.stringify(value2);
+  });
 }
 
 export { batchLoad, batchLoadTopMany, buildWhere, getUpdatedFields };

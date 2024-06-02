@@ -285,16 +285,13 @@ export class FilePageEntityBase extends BaseEntity<
     return one;
   }
 
-  protected static NON_DATE_PRIMITIVE_FIELDS = [
+  protected static PRIMITIVE_FIELDS = [
     'id',
+    'createdAt',
+    'updatedAt',
     'fileId',
     'pageId',
     'lines',
-  ];
-
-  protected static DATE_PRIMITIVE_FIELDS = [
-    'createdAt',
-    'updatedAt',
   ];
 
   protected static beforeUpdate<ENTITY extends FilePageEntityBase>(
@@ -331,8 +328,7 @@ export class FilePageEntityBase extends BaseEntity<
     const updatedFields = getUpdatedFields(
       oneBefore,
       one,
-      (this as any).NON_DATE_PRIMITIVE_FIELDS,
-      (this as any).DATE_PRIMITIVE_FIELDS
+      (this as any).PRIMITIVE_FIELDS
     );
     await (this as any).afterUpdate(oneBefore, one, updatedFields, context);
     return one;
@@ -398,8 +394,7 @@ export class FilePageEntityBase extends BaseEntity<
       const updatedFields = getUpdatedFields(
         oneBefore,
         one,
-        (this as any).NON_DATE_PRIMITIVE_FIELDS,
-        (this as any).DATE_PRIMITIVE_FIELDS
+        (this as any).PRIMITIVE_FIELDS
       );
       await (this as any).afterUpdate(oneBefore, one, updatedFields, context);
     }

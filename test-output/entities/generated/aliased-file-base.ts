@@ -273,13 +273,10 @@ export class AliasedFileEntityBase extends BaseEntity<
     return one;
   }
 
-  protected static NON_DATE_PRIMITIVE_FIELDS = [
+  protected static PRIMITIVE_FIELDS = [
     'size',
     'type',
     'id',
-  ];
-
-  protected static DATE_PRIMITIVE_FIELDS = [
   ];
 
   protected static beforeUpdate<ENTITY extends AliasedFileEntityBase>(
@@ -316,8 +313,7 @@ export class AliasedFileEntityBase extends BaseEntity<
     const updatedFields = getUpdatedFields(
       oneBefore,
       one,
-      (this as any).NON_DATE_PRIMITIVE_FIELDS,
-      (this as any).DATE_PRIMITIVE_FIELDS
+      (this as any).PRIMITIVE_FIELDS
     );
     await (this as any).afterUpdate(oneBefore, one, updatedFields, context);
     return one;
@@ -383,8 +379,7 @@ export class AliasedFileEntityBase extends BaseEntity<
       const updatedFields = getUpdatedFields(
         oneBefore,
         one,
-        (this as any).NON_DATE_PRIMITIVE_FIELDS,
-        (this as any).DATE_PRIMITIVE_FIELDS
+        (this as any).PRIMITIVE_FIELDS
       );
       await (this as any).afterUpdate(oneBefore, one, updatedFields, context);
     }

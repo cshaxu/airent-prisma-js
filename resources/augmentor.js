@@ -271,8 +271,7 @@ const AFTER_UPDATE_LINES = [
   "const updatedFields = getUpdatedFields(",
   "  oneBefore,",
   "  one,",
-  "  (this as any).NON_DATE_PRIMITIVE_FIELDS,",
-  "  (this as any).DATE_PRIMITIVE_FIELDS",
+  "  (this as any).PRIMITIVE_FIELDS",
   ");",
   "await (this as any).afterUpdate(oneBefore, one, updatedFields, context);",
 ];
@@ -280,17 +279,9 @@ const AFTER_UPDATE_LINES = [
 function buildPrismaUpdateOneMethodLines(entity) /* Code[] */ {
   const beforeAndAfterHooksLines = [
     "",
-    "protected static NON_DATE_PRIMITIVE_FIELDS = [",
+    "protected static PRIMITIVE_FIELDS = [",
     ...entity.fields
       .filter(utils.isPrimitiveField)
-      .filter((f) => f.strings.fieldClass !== "Date")
-      .map((f) => `  '${f.name}',`),
-    "];",
-    "",
-    "protected static DATE_PRIMITIVE_FIELDS = [",
-    ...entity.fields
-      .filter(utils.isPrimitiveField)
-      .filter((f) => f.strings.fieldClass === "Date")
       .map((f) => `  '${f.name}',`),
     "];",
     "",
