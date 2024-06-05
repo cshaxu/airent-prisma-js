@@ -77,15 +77,17 @@ function buildWhere(loadKeys: LoadKey[], allowIn: boolean = true): LoadKey {
   }
   const map = loadKeys.reduce((acc, loadKey) => {
     Object.entries(loadKey).forEach((entry) => {
-      const array = acc[entry[0]] ?? [];
-      array.push(entry[1]);
+      const array: any[] = acc[entry[0]] ?? [];
+      if (!array.some((value) => compare(value, entry[1]))) {
+        array.push(entry[1]);
+      }
       acc[entry[0]] = array;
     });
     return acc;
   }, {} as Record<string, any[]>);
   const allKeys = Object.keys(map);
   const singleKeys = Object.entries(map)
-    .filter((entry: [string, any[]]) => new Set(entry[1]).size === 1)
+    .filter((entry: [string, any[]]) => entry[1].length === 1)
     .map((entry) => entry[0]);
   const singleKeySet = new Set(singleKeys);
   const multiKeys = allKeys.filter((key) => !singleKeySet.has(key));
@@ -118,23 +120,27 @@ function getUpdatedFields<ENTITY>(
   return fields.filter((field) => {
     const value1 = (original as any)[field];
     const value2 = (updated as any)[field];
-    // same value, not updated
-    if (value1 === value2) {
-      return false;
-    }
-    const type1 = typeof value1;
-    const type2 = typeof value2;
-    // different value and different type, is updated
-    if (type1 !== type2) {
-      return true;
-    }
-    // different value and same type non-object, is updated (e.g. string, number, boolean)
-    if (type1 !== "object") {
-      return true;
-    }
-    // different value and both are objects, depends on deep comparison (e.g. [])
-    return JSON.stringify(value1) !== JSON.stringify(value2);
+    return !compare(value1, value2);
   });
 }
 
-export { batchLoad, batchLoadTopMany, buildWhere, getUpdatedFields };
+function compare<T>(a: T, b: T): boolean {
+  // same value/reference
+  if (a === b) {
+    return true;
+  }
+  const typeA = typeof a;
+  const typeB = typeof b;
+  // different type
+  if (typeA !== typeB) {
+    return false;
+  }
+  // same non-object type but differen value
+  if (typeA !== "object") {
+    return false;
+  }
+  // same objects but different reference, value could be same though
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+
+export { batchLoad, batchLoadTopMany, buildWhere, compare, getUpdatedFields };
