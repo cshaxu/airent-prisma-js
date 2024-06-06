@@ -7,7 +7,7 @@
     "airent-prisma": "./bin/index.js"
   },
   "scripts": {
-    "update": "airent-updater",
+    "update": "airdev-update",
     "build": "rm -rf ./lib && tsc -p tsconfig.json && crlf --set=LF bin/*",
     "test": "rm -rf ./test-output && node ./bin/index.js generate && airent"
   },
@@ -37,18 +37,18 @@
   ],
   "dependencies": {
     "@dbml/core": "^3.4.3",
-    "@prisma/client": "^5.14.0",
+    "@prisma/client": "^5.15.0",
     "js-yaml": "^4.1.0",
     "lodash": "^4.17.21"
   },
   "devDependencies": {
-    "@airent/utils": "github:cshaxu/airent-utils-js#3910c87fb6c858037bce0c003a4030f6565cce3b",
     "@types/async-lock": "^1.4.2",
     "@types/lodash": "^4.17.4",
     "@types/node": "^20.12.12",
+    "airdev": "github:cshaxu/airdev-js#191dc7b5b1fdff2c7a092ad7091c2774e686281b",
     "airent": "github:cshaxu/airent-js#a6f2588537aa3ec22624aeedcecdae3a1169442f",
     "crlf": "^1.1.1",
-    "prisma": "^5.14.0",
+    "prisma": "^5.15.0",
     "prisma-dbml-generator": "^0.12.0",
     "typescript": "^5.4.5"
   }
