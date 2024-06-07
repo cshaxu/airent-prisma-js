@@ -1,4 +1,3 @@
-import { omit } from "lodash";
 import { DEFAULT_BATCH_SIZE } from "./consts";
 import { LoadKey } from "./types";
 
@@ -112,7 +111,7 @@ function buildWhere(loadKeys: LoadKey[], allowIn: boolean = true): LoadKey {
   return where;
 }
 
-function getUpdatedFields<ENTITY>(
+function entityCompare<ENTITY>(
   original: ENTITY,
   updated: ENTITY,
   fields: string[]
@@ -143,4 +142,25 @@ function compare<T>(a: T, b: T): boolean {
   return JSON.stringify(a) === JSON.stringify(b);
 }
 
-export { batchLoad, batchLoadTopMany, buildWhere, compare, getUpdatedFields };
+function omit<T extends Record<string, any>, K extends keyof T>(
+  object: T,
+  keys: K | K[]
+): Omit<T, K> {
+  keys = (typeof keys === "string" ? [keys] : keys) as K[];
+  return Object.keys(object)
+    .map((key) => key as K)
+    .filter((key) => !keys.includes(key))
+    .reduce((acc, key) => {
+      acc[key] = object[key];
+      return acc;
+    }, {} as any);
+}
+
+export {
+  batchLoad,
+  batchLoadTopMany,
+  buildWhere,
+  compare,
+  entityCompare,
+  omit,
+};

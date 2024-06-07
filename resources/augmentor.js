@@ -50,7 +50,7 @@ function buildBeforeBase(entity, config) /* Code[] */ {
   }
   const airentImports = [
     "// airent imports",
-    `import { ValidatePrismaArgs, batchLoad, batchLoadTopMany, getUpdatedFields } from '${config.prisma.baseLibPackage}';`,
+    `import { ValidatePrismaArgs, batchLoad, batchLoadTopMany, entityCompare } from '${config.prisma.baseLibPackage}';`,
   ];
   const configImports = [
     "// config imports",
@@ -268,7 +268,7 @@ const BEFORE_UPDATE_LINES = [
   "await (this as any).beforeUpdate(oneBefore, context);",
 ];
 const AFTER_UPDATE_LINES = [
-  "const updatedFields = getUpdatedFields(",
+  "const updatedFields = entityCompare(",
   "  oneBefore,",
   "  one,",
   "  (this as any).PRIMITIVE_FIELDS",

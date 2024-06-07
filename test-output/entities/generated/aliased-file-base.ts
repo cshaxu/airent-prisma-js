@@ -1,7 +1,7 @@
 // library imports
 import { Prisma } from '@prisma/client';
 // airent imports
-import { ValidatePrismaArgs, batchLoad, batchLoadTopMany, getUpdatedFields } from '../../../src/index';
+import { ValidatePrismaArgs, batchLoad, batchLoadTopMany, entityCompare } from '../../../src/index';
 // config imports
 import prisma from '../../../test-resources/prisma';
 // entity imports
@@ -310,7 +310,7 @@ export class AliasedFileEntityBase extends BaseEntity<
       args as unknown as Prisma.SelectSubset<T, Prisma.AliasedFileUpdateArgs>
     );
     const one = (this as any).fromOne(model, context) as ENTITY;
-    const updatedFields = getUpdatedFields(
+    const updatedFields = entityCompare(
       oneBefore,
       one,
       (this as any).PRIMITIVE_FIELDS
@@ -376,7 +376,7 @@ export class AliasedFileEntityBase extends BaseEntity<
     if (oneBefore === null) {
       await (this as any).afterCreate(one, context);
     } else {
-      const updatedFields = getUpdatedFields(
+      const updatedFields = entityCompare(
         oneBefore,
         one,
         (this as any).PRIMITIVE_FIELDS
