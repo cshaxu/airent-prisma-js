@@ -42,6 +42,7 @@ export class AliasedFileEntityBase extends BaseEntity<
   public type: PrismaFileType;
   public id: string;
 
+  /** @deprecated */
   protected pages?: FilePageEntity[];
 
   protected chunks?: FilePageChunkEntity[];
@@ -81,6 +82,7 @@ export class AliasedFileEntityBase extends BaseEntity<
 
   /** associations */
 
+  /** @deprecated */
   protected pagesLoadConfig: LoadConfig<AliasedFileEntityBase, FilePageEntity> = {
     name: 'AliasedFileEntity.pages',
     filter: (one: AliasedFileEntityBase) => one.pages === undefined,
@@ -102,6 +104,7 @@ export class AliasedFileEntityBase extends BaseEntity<
     },
   };
 
+  /** @deprecated */
   public async getPages(): Promise<FilePageEntity[]> {
     if (this.pages !== undefined) {
       return this.pages;
@@ -110,6 +113,7 @@ export class AliasedFileEntityBase extends BaseEntity<
     return this.pages!;
   }
 
+  /** @deprecated */
   public setPages(pages?: FilePageEntity[]): void {
     this.pages = pages;
   }

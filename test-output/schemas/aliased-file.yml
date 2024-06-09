@@ -12,6 +12,9 @@ prisma:
     - createdAt
   internalFields:
     - pages
+  deprecatedFields:
+    - pages
+    - chunks
 types:
   - name: PrismaAliasedFile
     aliasOf: AliasedFile
@@ -42,6 +45,7 @@ fields:
       - fileId
     isPrisma: true
     internal: true
+    deprecated: true
   - id: 1
     name: id
     type: string

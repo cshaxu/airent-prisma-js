@@ -5,6 +5,9 @@ prisma:
     - createdAt
   internalFields:
     - pages
+  deprecatedFields:
+    - pages
+    - chunks
 fields:
   - id: 1
     name: id

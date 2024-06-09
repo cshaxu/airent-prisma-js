@@ -39,11 +39,29 @@ Review primitive and association fields in your existing entity schema, and you 
 
 ### (Optional) Customize your entity schemas
 
-If you want to make certain primitive or association fields internal and not expose them in presenters or field requests, simple add these lines to your entity schema:
+If you want to avoid porting certain fields from your Prisma schema to your Airent schema, you may add these lines to your entity schema:
+
+```yaml
+prisma:
+  skipFields:
+    - field1
+    - field2
+```
+
+If you want to make certain primitive or association fields internal and not expose them in presenters or field requests, you may add these lines to your entity schema:
 
 ```yaml
 prisma:
   internalFields:
+    - field1
+    - field2
+```
+
+If you want to mark certain primitive or association fields deprecated, you may add these lines to your entity schema:
+
+```yaml
+prisma:
+  deprecatedFields:
     - field1
     - field2
 ```

@@ -229,10 +229,12 @@ function merge(inputSchema, tableSchema, isVerbose) {
   const tableFieldNames = new Set((tableFieldsRaw ?? []).map((f) => f.name));
   const inputFieldNames = new Set((inputFieldsRaw ?? []).map((f) => f.name));
   const internalPrismaFields = new Set(inputPrisma?.internalFields ?? []);
+  const deprecatedPrismaFields = new Set(inputPrisma?.deprecatedFields ?? []);
   const tableFields = tableFieldsRaw
     .map((f) => ({
       ...f,
       ...(internalPrismaFields.has(f.name) && { internal: true }),
+      ...(deprecatedPrismaFields.has(f.name) && { deprecated: true }),
     }))
     .filter(
       (f) =>

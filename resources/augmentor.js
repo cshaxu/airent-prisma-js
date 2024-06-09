@@ -32,7 +32,7 @@ function augmentConfig(config) /* void */ {
 
 /**
  * YAML FLAGS
- * - prisma: { skipFields: string[]; internalFields: string[]; universalFields: string[] }
+ * - prisma: { skipFields: string[]; internalFields: string[]; deprecatedFields: string[] }
  * - isPrisma: false | undefined, top-level flag, false to skip generating prisma wrappers
  * - isPrisma: boolean | undefined, field-level flag to note field as prisma generated field
  * - prismaLoader: boolean | undefined, field-level flag to decide whether to generate loader for the field
