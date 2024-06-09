@@ -1,6 +1,6 @@
 {
   "name": "@airent/prisma",
-  "version": "0.1.9",
+  "version": "0.0.0",
   "description": "Prisma Extension for Airent 0.1.9",
   "main": "./lib/index.js",
   "bin": {
