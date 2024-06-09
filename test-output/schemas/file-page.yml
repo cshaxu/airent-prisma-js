@@ -25,31 +25,37 @@ fields:
     type: string
     strategy: primitive
     isPrisma: true
+    internal: false
   - id: 2
     name: createdAt
     type: Date
     strategy: primitive
     isPrisma: true
+    internal: false
   - id: 3
     name: updatedAt
     type: Date
     strategy: primitive
     isPrisma: true
+    internal: false
   - id: 4
     name: fileId
     type: string
     strategy: primitive
     isPrisma: true
+    internal: false
   - id: 5
     name: pageId
     type: number
     strategy: primitive
     isPrisma: true
+    internal: false
   - id: 6
     name: lines
     type: PrismaJsonValue
     strategy: primitive
     isPrisma: true
+    internal: false
   - id: 7
     name: file
     type: AliasedFile
@@ -59,6 +65,7 @@ fields:
     targetKeys:
       - id
     isPrisma: true
+    internal: false
   - id: 8
     name: chunks
     type: FilePageChunk[]
@@ -70,3 +77,4 @@ fields:
       - fileId
       - pageId
     isPrisma: true
+    internal: false

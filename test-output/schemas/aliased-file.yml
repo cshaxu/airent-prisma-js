@@ -30,11 +30,13 @@ fields:
     type: number
     strategy: primitive
     isPrisma: true
+    internal: false
   - id: 4
     name: type
     type: PrismaFileType
     strategy: primitive
     isPrisma: true
+    internal: false
   - id: 5
     name: pages
     type: FilePage[]
@@ -44,14 +46,13 @@ fields:
     targetKeys:
       - fileId
     isPrisma: true
-    internal: true
     deprecated: true
+    internal: true
   - id: 1
     name: id
     type: string
     internal: true
     strategy: primitive
-    isPrisma: true
   - id: 2
     name: chunks
     type: FilePageChunk[]

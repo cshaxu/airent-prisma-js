@@ -86,6 +86,14 @@ async function configure() {
   if (shouldEnablePrismaYamlGenerator) {
     config.prisma.extensionSchemaPath = config.schemaPath;
     config.schemaPath = "node_modules/.airent/schemas";
+    config.prisma.primitiveFields = await askQuestion(
+      "Default behavior to generate primitive fields (skip | internal | external)",
+      "external"
+    );
+    config.prisma.primitiveFields = await askQuestion(
+      "Default behavior to generate primitive fields (skip | internal | external)",
+      "internal"
+    );
     console.log(
       '[AIRENT-PRISMA/INFO] Please run "npx airent-prisma generate" before "npx airent" in the future.'
     );

@@ -6,6 +6,7 @@ const yaml = require("js-yaml");
 const path = require("path");
 
 const utils = require("airent/resources/utils.js");
+const internal = require("stream");
 
 const PROJECT_PATH = process.cwd();
 const CONFIG_FILE_PATH = path.join(PROJECT_PATH, "airent.config.json");
@@ -36,16 +37,10 @@ async function loadConfig(isVerbose) {
   }
   const configContent = await fs.promises.readFile(CONFIG_FILE_PATH, "utf8");
   const config = JSON.parse(configContent);
-  const { schemaPath, prisma } = config;
-  const { extensionSchemaPath } = prisma;
-  const loadedConfig = {
-    schemaPath: path.join(PROJECT_PATH, extensionSchemaPath),
-    outputPath: path.join(PROJECT_PATH, schemaPath),
-  };
   if (isVerbose) {
-    console.log(loadedConfig);
+    console.log(config);
   }
-  return loadedConfig;
+  return config;
 }
 
 async function getSchemaFilePaths(schemaPath) {
@@ -97,7 +92,7 @@ const NATIVE_PRISMA_TYPES = {
   Bytes: "Buffer",
 };
 
-function buildTableSchema(table, enums, refs, aliasMap) {
+function buildTableSchema(table, enums, refs, aliasMap, config) {
   const { name: tableName } = table;
   const entityName = aliasMap[tableName] ?? tableName;
 
@@ -180,7 +175,7 @@ function buildTableSchema(table, enums, refs, aliasMap) {
   return entity;
 }
 
-async function loadTableSchemas(aliasMap, isVerbose) {
+async function loadTableSchemas(aliasMap, config, isVerbose) {
   const database = await loadDbml(PRISMA_DBML_FILE_PATH, isVerbose);
   const enums = new Set(
     database.schemas.flatMap((s) => s.enums).map((e) => e.name)
@@ -194,10 +189,34 @@ async function loadTableSchemas(aliasMap, isVerbose) {
       { table: b.tableName, fields: b.fieldNames, relation: b.relation },
     ]);
   const tables = database.schemas.flatMap((s) => s.tables);
-  return tables.map((table) => buildTableSchema(table, enums, refs, aliasMap));
+  return tables.map((table) =>
+    buildTableSchema(table, enums, refs, aliasMap, config)
+  );
 }
 
-function merge(inputSchema, tableSchema, isVerbose) {
+function polish(tableSchema, config) {
+  const fields = tableSchema.fields
+    .filter(
+      (field) =>
+        (field.strategy === "primitive" &&
+          config.prisma.primitiveFields !== "skip") ||
+        (field.strategy === "association" &&
+          config.prisma.associationFields !== "skip")
+    )
+    .map((field) => {
+      const isInternal =
+        (field.strategy === "primitive" &&
+          config.prisma.primitiveFields === "internal") ||
+        (field.strategy === "association" &&
+          config.prisma.associationFields === "internal");
+      field.internal = isInternal;
+      return field;
+    });
+  tableSchema.fields = fields;
+  return tableSchema;
+}
+
+function merge(inputSchema, tableSchema, config, isVerbose) {
   if (isVerbose) {
     console.log(`[AIRENT-PRISMA/INFO] Merging schema ${tableSchema.name} ...`);
   }
@@ -226,25 +245,45 @@ function merge(inputSchema, tableSchema, isVerbose) {
   const prisma = { ...tablePrisma, ...inputPrisma };
 
   // build fields
-  const tableFieldNames = new Set((tableFieldsRaw ?? []).map((f) => f.name));
   const inputFieldNames = new Set((inputFieldsRaw ?? []).map((f) => f.name));
+  const skipPrismaFields = new Set(inputPrisma?.skipFields ?? []);
   const internalPrismaFields = new Set(inputPrisma?.internalFields ?? []);
+  const externalPrismaFields = new Set(inputPrisma?.externalFields ?? []);
   const deprecatedPrismaFields = new Set(inputPrisma?.deprecatedFields ?? []);
   const tableFields = tableFieldsRaw
-    .map((f) => ({
-      ...f,
-      ...(internalPrismaFields.has(f.name) && { internal: true }),
-      ...(deprecatedPrismaFields.has(f.name) && { deprecated: true }),
-    }))
-    .filter(
-      (f) =>
-        !inputFieldNames.has(f.name) &&
-        inputPrisma?.skipFields?.includes(f.name) !== true
-    );
-  const inputFields = (inputFieldsRaw ?? []).map((f) => ({
-    ...f,
-    ...(tableFieldNames.has(f.name) && { isPrisma: true }),
-  }));
+    .filter((f) => {
+      const isConfigSkip =
+        (f.strategy === "primitive" &&
+          config.prisma.primitiveFields === "skip") ||
+        (f.strategy === "association" &&
+          config.prisma.associationFields === "skip");
+      const isFieldSkip = skipPrismaFields.has(f.name);
+      const isFieldInternal = internalPrismaFields.has(f.name);
+      const isFieldExternal = externalPrismaFields.has(f.name);
+      const isFieldCustomized = inputFieldNames.has(f.name);
+      return (
+        !isFieldCustomized &&
+        !isFieldSkip &&
+        (isFieldInternal || isFieldExternal || !isConfigSkip)
+      );
+    })
+    .map((f) => {
+      const isConfigInternal =
+        (f.strategy === "primitive" &&
+          config.prisma.primitiveFields === "internal") ||
+        (f.strategy === "association" &&
+          config.prisma.associationFields === "internal");
+      const isFieldInternal = internalPrismaFields.has(f.name);
+      const isFieldExternal = externalPrismaFields.has(f.name);
+      const isInternal =
+        isFieldInternal || (isConfigInternal && !isFieldExternal);
+      return {
+        ...f,
+        ...(deprecatedPrismaFields.has(f.name) && { deprecated: true }),
+        internal: isInternal,
+      };
+    });
+  const inputFields = inputFieldsRaw ?? [];
   const fields = [...tableFields, ...inputFields];
 
   // build types
@@ -256,7 +295,7 @@ function merge(inputSchema, tableSchema, isVerbose) {
   return { name: tableName, model, prisma, ...extras, types, fields };
 }
 
-function reconcile(inputSchemas, tableSchemas, isVerbose) {
+function reconcile(inputSchemas, tableSchemas, config, isVerbose) {
   if (isVerbose) {
     console.log("[AIRENT-PRISMA/INFO] Reconciling schemas ...");
   }
@@ -270,8 +309,8 @@ function reconcile(inputSchemas, tableSchemas, isVerbose) {
       const entity = !tableSchema
         ? inputSchema
         : !inputSchema
-        ? tableSchema
-        : merge(inputSchema, tableSchema, isVerbose);
+        ? polish(tableSchema, config)
+        : merge(inputSchema, tableSchema, config, isVerbose);
 
       const entName = utils.toTitleCase(entity.name);
       const modelDefinition =
@@ -328,20 +367,31 @@ async function generate(argv) {
 
   // load config
   const config = await loadConfig(isVerbose);
-  const inputSchemas = await loadSchemas(config.schemaPath, isVerbose);
+  const inputSchemaPath = path.join(
+    PROJECT_PATH,
+    config.prisma.extensionSchemaPath
+  );
+  const outputSchemaPath = path.join(PROJECT_PATH, config.schemaPath);
+
+  const inputSchemas = await loadSchemas(inputSchemaPath, isVerbose);
   const aliasMap = inputSchemas.reduce((acc, entity) => {
     acc[entity.aliasOf ?? entity.name] = entity.name;
     return acc;
   }, {});
-  const tableSchemas = await loadTableSchemas(aliasMap, isVerbose);
-  const outputSchemas = reconcile(inputSchemas, tableSchemas, isVerbose);
+  const tableSchemas = await loadTableSchemas(aliasMap, config, isVerbose);
+  const outputSchemas = reconcile(
+    inputSchemas,
+    tableSchemas,
+    config,
+    isVerbose
+  );
 
   // Ensure the output directory exists
-  await fs.promises.mkdir(config.outputPath, { recursive: true });
+  await fs.promises.mkdir(outputSchemaPath, { recursive: true });
 
   // Generate new YAML files
   const functions = outputSchemas.map(
-    (entity) => () => generateOne(entity, config.outputPath, isVerbose)
+    (entity) => () => generateOne(entity, outputSchemaPath, isVerbose)
   );
   await sequential(functions);
   console.log("[AIRENT-PRISMA/INFO] Task completed.");

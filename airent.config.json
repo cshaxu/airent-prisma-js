@@ -8,6 +8,8 @@
     "libImportPath": "./src/index",
     "extensionSchemaPath": "test-schemas",
     "prismaImport": "import prisma from '../../../test-resources/prisma';",
-    "prismaBatchSize": 1234
+    "prismaBatchSize": 1234,
+    "primitiveFields": "external",
+    "associationFields": "external"
   }
 }
