@@ -1,7 +1,7 @@
 {
   "name": "@airent/prisma",
   "version": "0.0.0",
-  "description": "Prisma Extension for Airent 0.1.9",
+  "description": "Prisma Extension for Airent 0.1.10",
   "main": "./lib/index.js",
   "bin": {
     "airent-prisma": "./bin/index.js"
@@ -43,8 +43,8 @@
   "devDependencies": {
     "@types/async-lock": "^1.4.2",
     "@types/node": "^20.12.12",
-    "airdev": "github:cshaxu/airdev-js#3eedbfba9ffdac967d772b6dae9dd79608f31d8b",
-    "airent": "github:cshaxu/airent-js#a6f2588537aa3ec22624aeedcecdae3a1169442f",
+    "airdev": "github:cshaxu/airdev-js#a2bf0e7bdabfbad644f72487b3042bbad54baf65",
+    "airent": "github:cshaxu/airent-js#a3c5b0c774754633e7722c1206decd96bb761426",
     "crlf": "^1.1.1",
     "prisma": "^5.15.0",
     "prisma-dbml-generator": "^0.12.0",
