@@ -3,7 +3,7 @@ import { Prisma } from '@prisma/client';
 // airent imports
 import { ValidatePrismaArgs, batchLoad, batchLoadTopMany, entityCompare } from '../../../src/index';
 // config imports
-import prisma from '../../../test-resources/prisma';
+import prisma from '../../../test-sources/prisma';
 // entity imports
 import { AliasedFileModel } from './aliased-file-type';
 import { FilePageChunkModel } from './file-page-chunk-type';
@@ -21,7 +21,7 @@ import {
 } from 'airent';
 
 // config imports
-import { Context } from '../../../test-resources/context';
+import { Context } from '../../../test-sources/context';
 
 // entity imports
 import { FilePage as PrismaFilePage } from '@prisma/client';

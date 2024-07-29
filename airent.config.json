@@ -2,12 +2,12 @@
   "type": "commonjs",
   "schemaPath": "test-output/schemas",
   "entityPath": "test-output/entities",
-  "contextImportPath": "./test-resources/context",
+  "contextImportPath": "./test-sources/context",
   "augmentors": ["resources/augmentor.js"],
   "prisma": {
     "libImportPath": "./src/index",
     "extensionSchemaPath": "test-schemas",
-    "prismaImport": "import prisma from '../../../test-resources/prisma';",
+    "prismaImport": "import prisma from '../../../test-sources/prisma';",
     "prismaBatchSize": 1234,
     "primitiveFields": "external",
     "associationFields": "external"

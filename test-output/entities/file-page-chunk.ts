@@ -2,7 +2,7 @@
 import { LoadKey, toArrayMap, toObjectMap } from 'airent';
 
 // config imports
-import { Context } from '../../test-resources/context';
+import { Context } from '../../test-sources/context';
 
 // entity imports
 import { FilePageChunk as PrismaFilePageChunk } from '@prisma/client';
