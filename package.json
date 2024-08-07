@@ -42,7 +42,7 @@
   "devDependencies": {
     "@types/async-lock": "^1.4.2",
     "@types/node": "^20.12.12",
-    "airent": "github:cshaxu/airent-js#bb57908fd674dfd700d853cc259a0bb5d8ecf1a0",
+    "airent": "github:cshaxu/airent-js#6de47a201689026527566ee80eb0563406e78820",
     "crlf": "^1.1.1",
     "prisma": "^5.15.0",
     "prisma-dbml-generator": "^0.12.0",

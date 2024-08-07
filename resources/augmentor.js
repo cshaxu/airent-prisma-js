@@ -449,24 +449,6 @@ function buildAssociationFieldModelsLoader(field, config) /* Code */ {
   return `await ${batch}(${loader}${matcher}, keys${topSize}${batchSize})`;
 }
 
-function buildLoadConfigSetterLines(field) /* Code[] */ {
-  const mapper = field.code.loadConfig.targetMapper;
-  const setter = field.code.loadConfig.sourceSetter;
-  const mapperLine = `const map = ${mapper};`;
-  if (!utils.isEntityTypeField(field)) {
-    return [
-      mapperLine,
-      `sources.forEach((one) => (one.${field.name} = ${setter}));`,
-    ];
-  }
-  return [
-    mapperLine,
-    `sources.forEach((one) => {`,
-    `  one.${field.name} = ${setter};`,
-    `});`,
-  ];
-}
-
 function augmentOne(entity, config, isVerbose) /* void */ {
   if (isVerbose) {
     console.log(`[AIRENT-PRISMA/INFO] augmenting ${entity.name}`);
@@ -486,7 +468,6 @@ function augmentOne(entity, config, isVerbose) /* void */ {
     loadConfig.targetModelsLoader = isLoaderGeneratable
       ? buildAssociationFieldModelsLoader(field, config)
       : "[/* TODO: load associated models */]";
-    loadConfig.setterLines = buildLoadConfigSetterLines(field);
   });
 }
 

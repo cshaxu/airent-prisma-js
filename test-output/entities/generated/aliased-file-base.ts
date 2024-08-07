@@ -98,9 +98,7 @@ export class AliasedFileEntityBase extends BaseEntity<
     },
     setter: (sources: AliasedFileEntityBase[], targets: FilePageEntity[]) => {
       const map = toArrayMap(targets, (one) => JSON.stringify({ fileId: one.fileId }), (one) => one);
-      sources.forEach((one) => {
-        one.pages = map.get(JSON.stringify({ fileId: one.id })) ?? [];
-      });
+      sources.forEach((one) => (one.pages = map.get(JSON.stringify({ fileId: one.id })) ?? []));
     },
   };
 
@@ -133,9 +131,7 @@ export class AliasedFileEntityBase extends BaseEntity<
     },
     setter: (sources: AliasedFileEntityBase[], targets: FilePageChunkEntity[]) => {
       const map = toArrayMap(targets, (one) => JSON.stringify({ fileId: one.fileId }), (one) => one);
-      sources.forEach((one) => {
-        one.chunks = map.get(JSON.stringify({ fileId: one.id })) ?? [];
-      });
+      sources.forEach((one) => (one.chunks = map.get(JSON.stringify({ fileId: one.id })) ?? []));
     },
   };
 
