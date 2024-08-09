@@ -6,7 +6,6 @@ const yaml = require("js-yaml");
 const path = require("path");
 
 const utils = require("airent/resources/utils.js");
-const internal = require("stream");
 
 const PROJECT_PATH = process.cwd();
 const CONFIG_FILE_PATH = path.join(PROJECT_PATH, "airent.config.json");
@@ -306,11 +305,13 @@ function reconcile(inputSchemas, tableSchemas, config, isVerbose) {
     .map((schemaName) => {
       const tableSchema = tableSchemas.find((s) => s.name === schemaName);
       const inputSchema = inputSchemas.find((s) => s.name === schemaName);
-      const entity = !tableSchema
+      const entity = tableSchema
         ? inputSchema
-        : !inputSchema
-        ? polish(tableSchema, config)
-        : merge(inputSchema, tableSchema, config, isVerbose);
+          ? inputSchema.isPrisma === false
+            ? inputSchema
+            : merge(inputSchema, tableSchema, config, isVerbose)
+          : polish(tableSchema, config)
+        : inputSchema;
 
       const entName = utils.toTitleCase(entity.name);
       const modelDefinition =
