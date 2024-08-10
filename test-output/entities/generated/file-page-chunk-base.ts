@@ -5,6 +5,7 @@ import { ValidatePrismaArgs, batchLoad, batchLoadTopMany, entityCompare } from '
 // config imports
 import prisma from '../../../test-sources/prisma';
 // entity imports
+import { FilePageChunkPrimitiveField } from './file-page-chunk-type';
 import { AliasedFileModel } from './aliased-file-type';
 import { FilePageModel } from './file-page-type';
 // airent imports
@@ -286,7 +287,7 @@ export class FilePageChunkEntityBase extends BaseEntity<
     return one;
   }
 
-  protected static PRIMITIVE_FIELDS = [
+  protected static PRIMITIVE_FIELDS: FilePageChunkPrimitiveField[] = [
     'id',
     'createdAt',
     'updatedAt',
@@ -307,7 +308,7 @@ export class FilePageChunkEntityBase extends BaseEntity<
     this: EntityConstructor<FilePageChunkModel, Context, ENTITY>,
     _oneBefore: ENTITY,
     _oneAfter: ENTITY,
-    _updatedFields: string[],
+    _updatedFields: FilePageChunkPrimitiveField[],
     _context: Context
   ): void | Promise<void> {}
 

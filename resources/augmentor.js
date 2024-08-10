@@ -58,11 +58,19 @@ function buildBeforeBase(entity, config) /* Code[] */ {
       "import prisma from 'TODO: specify prismaImport in your airent config';",
   ];
 
+  const entityImports = [
+    "// entity imports",
+    `import { ${utils.toTitleCase(entity.name)}PrimitiveField } from './${
+      entity.strings.typePackage
+    }';`,
+    ...buildModelImports(entity),
+  ];
+
   return [
     ...libraryImports,
     ...airentImports,
     ...configImports,
-    ...buildModelImports(entity),
+    ...entityImports,
   ];
 }
 
@@ -80,7 +88,7 @@ function buildModelImports(entity) /* Code[] */ {
   if (prismaAssociationTypes.length === 0) {
     return [];
   }
-  const modelImports = prismaAssociationTypes
+  return prismaAssociationTypes
     .map((t) => {
       if (addedTypeNames.has(t.name)) {
         return "";
@@ -91,7 +99,21 @@ function buildModelImports(entity) /* Code[] */ {
       }';`;
     })
     .filter((line) => line.length > 0);
-  return ["// entity imports", ...modelImports];
+}
+
+// build entity.code.afterType
+function buildAfterType(entity) /* Code[] */ {
+  const primitiveFields = entity.fields
+    .filter(utils.isPrimitiveField)
+    .map((f) => `'${f.name}'`)
+    .join(" | ");
+  return [
+    "",
+    ...(entity.deprecated ? ["/** @deprecated */"] : []),
+    `export type ${utils.toTitleCase(
+      entity.name
+    )}PrimitiveField = ${primitiveFields};`,
+  ];
 }
 
 // build entity.code.insideBase
@@ -279,7 +301,9 @@ const AFTER_UPDATE_LINES = [
 function buildPrismaUpdateOneMethodLines(entity) /* Code[] */ {
   const beforeAndAfterHooksLines = [
     "",
-    "protected static PRIMITIVE_FIELDS = [",
+    `protected static PRIMITIVE_FIELDS: ${utils.toTitleCase(
+      entity.name
+    )}PrimitiveField[] = [`,
     ...entity.fields
       .filter(utils.isPrimitiveField)
       .map((f) => `  '${f.name}',`),
@@ -295,7 +319,7 @@ function buildPrismaUpdateOneMethodLines(entity) /* Code[] */ {
     `  this: EntityConstructor<${entity.model}, Context, ENTITY>,`,
     "  _oneBefore: ENTITY,",
     "  _oneAfter: ENTITY,",
-    "  _updatedFields: string[],",
+    `  _updatedFields: ${utils.toTitleCase(entity.name)}PrimitiveField[],`,
     "  _context: Context",
     "): void | Promise<void> {}",
   ];
@@ -457,9 +481,11 @@ function augmentOne(entity, config, isVerbose) /* void */ {
   const prismaBeforeBase = buildBeforeBase(entity, config);
   const prismaInsideBase = buildInsideBase(entity);
   const prismaBeforeType = buildBeforeType(entity);
+  const prismaAfterType = buildAfterType(entity);
   entity.code.beforeBase.push(...prismaBeforeBase);
   entity.code.insideBase.push(...prismaInsideBase);
   entity.code.beforeType.push(...prismaBeforeType);
+  entity.code.afterType.push(...prismaAfterType);
   entity.skipSelfLoader = true;
   entity.fields.filter(utils.isAssociationField).forEach((field) => {
     const { loadConfig } = field.code;

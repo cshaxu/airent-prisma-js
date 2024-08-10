@@ -1,4 +1,3 @@
-// entity imports
 import { AliasedFileModel } from './aliased-file-type';
 import { FilePageChunkModel } from './file-page-chunk-type';
 // airent imports
@@ -37,3 +36,5 @@ export type FilePageResponse = {
 };
 
 export type SelectedFilePageResponse<S extends FilePageFieldRequest> = Select<FilePageResponse, S>;
+
+export type FilePagePrimitiveField = 'id' | 'createdAt' | 'updatedAt' | 'fileId' | 'pageId' | 'lines';
