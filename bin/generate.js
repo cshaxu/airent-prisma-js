@@ -215,7 +215,7 @@ function polish(tableSchema, config) {
   return tableSchema;
 }
 
-function merge(inputSchema, tableSchema, config, isVerbose) {
+function mergeOne(inputSchema, tableSchema, config, isVerbose) {
   if (isVerbose) {
     console.log(`[AIRENT-PRISMA/INFO] Merging schema ${tableSchema.name} ...`);
   }
@@ -294,7 +294,7 @@ function merge(inputSchema, tableSchema, config, isVerbose) {
   return { name: tableName, model, prisma, ...extras, types, fields };
 }
 
-function reconcile(inputSchemas, tableSchemas, config, isVerbose) {
+function mergeAll(inputSchemas, tableSchemas, config, isVerbose) {
   if (isVerbose) {
     console.log("[AIRENT-PRISMA/INFO] Reconciling schemas ...");
   }
@@ -309,7 +309,7 @@ function reconcile(inputSchemas, tableSchemas, config, isVerbose) {
         ? inputSchema
           ? inputSchema.isPrisma === false
             ? inputSchema
-            : merge(inputSchema, tableSchema, config, isVerbose)
+            : mergeOne(inputSchema, tableSchema, config, isVerbose)
           : polish(tableSchema, config)
         : inputSchema;
 
@@ -353,6 +353,35 @@ function reconcile(inputSchemas, tableSchemas, config, isVerbose) {
     });
 }
 
+function reconcile(schemas) {
+  // if a primitive field is aliased, this is to ensure all association
+  // fields in other entities will reference the correct field name
+  const entityAliasMap = schemas.reduce((entityMap, entity) => {
+    entityMap[entity.name] = entity.fields
+      .filter((field) => utils.isPrimitiveField(field))
+      .filter((field) => field.aliasOf)
+      .reduce((fieldMap, field) => {
+        fieldMap[field.aliasOf] = field.name;
+        return fieldMap;
+      }, {});
+    return entityMap;
+  }, {});
+  return schemas.map((entity) => {
+    const fields = entity.fields.map((field) => {
+      if (!utils.isAssociationField(field)) {
+        return field;
+      }
+      const entName = utils.toPrimitiveTypeName(field.type);
+      const fieldAliasMap = entityAliasMap[entName];
+      const targetKeys = field.targetKeys.map(
+        (name) => fieldAliasMap[name] ?? name
+      );
+      return { ...field, targetKeys };
+    });
+    return { ...entity, fields };
+  });
+}
+
 async function generateOne(entity, outputPath, isVerbose) {
   const fileName = `${toKababCase(entity.name)}.yml`;
   const outputFilePath = path.join(outputPath, fileName);
@@ -380,12 +409,8 @@ async function generate(argv) {
     return acc;
   }, {});
   const tableSchemas = await loadTableSchemas(aliasMap, config, isVerbose);
-  const outputSchemas = reconcile(
-    inputSchemas,
-    tableSchemas,
-    config,
-    isVerbose
-  );
+  const mergedSchemas = mergeAll(inputSchemas, tableSchemas, config, isVerbose);
+  const outputSchemas = reconcile(mergedSchemas);
 
   // Ensure the output directory exists
   await fs.promises.mkdir(outputSchemaPath, { recursive: true });
