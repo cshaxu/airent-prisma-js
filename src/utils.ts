@@ -4,7 +4,8 @@ import { LoadKey } from "./types";
 async function batchLoad<ENTITY>(
   loader: (query: any) => Promise<ENTITY[]>,
   keys: LoadKey[],
-  batchSize: number = DEFAULT_BATCH_SIZE
+  batchSize: number = DEFAULT_BATCH_SIZE,
+  topSize?: number
 ): Promise<ENTITY[]> {
   if (keys.length === 0) {
     return [];
@@ -13,10 +14,18 @@ async function batchLoad<ENTITY>(
   const where = buildWhere(keys);
   let offset = 0;
   let batch: ENTITY[] = [];
+  const take = topSize === undefined ? batchSize : Math.min(batchSize, topSize);
   do {
-    const query = { where, skip: offset, take: batchSize };
+    const query = { where, skip: offset, take };
     batch = await loader(query);
-    result.push(...batch);
+    if (topSize === undefined || result.length + batch.length <= topSize) {
+      result.push(...batch);
+    } else {
+      if (result.length < topSize) {
+        result.push(...batch.slice(0, topSize - result.length));
+      }
+      break;
+    }
     offset += batch.length;
   } while (batch.length === batchSize);
   return result;
@@ -35,39 +44,43 @@ async function batchLoadTopMany<ENTITY>(
   }
   const { OR, ...otherConditions } = buildWhere(keys, false);
   const counter = new Map<LoadKey, number>();
-  let remainingKeys: LoadKey[] = OR ?? [{}];
-  let batch: ENTITY[] = [];
-  do {
-    const offset = remainingKeys.reduce(
-      (count, key) => count + (counter.get(key) ?? 0),
-      0
-    );
-    const query = {
-      where: { OR: remainingKeys, ...otherConditions },
-      skip: offset,
-      take: batchSize,
-    };
-    batch = await loader(query);
-    const nextRemainingKeys: LoadKey[] = [];
-    for (const entity of batch) {
-      for (const key of remainingKeys) {
-        if (matcher(key, entity)) {
+  if (OR === undefined) {
+    return await batchLoad(loader, keys, batchSize, topSize);
+  } else {
+    let remainingKeys: LoadKey[] = OR;
+    let batch: ENTITY[] = [];
+    do {
+      const offset = remainingKeys.reduce(
+        (count, key) => count + (counter.get(key) ?? 0),
+        0
+      );
+      const query = {
+        where: { OR: remainingKeys, ...otherConditions },
+        skip: offset,
+        take: batchSize,
+      };
+      batch = await loader(query);
+      const nextRemainingKeys: LoadKey[] = [];
+      for (const entity of batch) {
+        for (const key of remainingKeys) {
+          if (matcher(key, entity)) {
+            const count = counter.get(key) ?? 0;
+            if (count < topSize) {
+              result.push(entity);
+              counter.set(key, count + 1);
+              break;
+            }
+          }
           const count = counter.get(key) ?? 0;
           if (count < topSize) {
-            result.push(entity);
-            counter.set(key, count + 1);
-            break;
+            nextRemainingKeys.push(key);
           }
         }
-        const count = counter.get(key) ?? 0;
-        if (count < topSize) {
-          nextRemainingKeys.push(key);
-        }
       }
-    }
-    remainingKeys = nextRemainingKeys;
-  } while (remainingKeys.length > 0 && batch.length === batchSize);
-  return result;
+      remainingKeys = nextRemainingKeys;
+    } while (remainingKeys.length > 0 && batch.length === batchSize);
+    return result;
+  }
 }
 
 function buildWhere(loadKeys: LoadKey[], allowIn: boolean = true): LoadKey {
