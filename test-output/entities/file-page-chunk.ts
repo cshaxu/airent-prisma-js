@@ -13,8 +13,8 @@ import {
   FilePageChunkResponse,
   SelectedFilePageChunkResponse,
   FilePageChunkModel,
-} from './generated/file-page-chunk-type';
-import { FilePageChunkEntityBase } from './generated/file-page-chunk-base';
+} from '../generated/types/file-page-chunk';
+import { FilePageChunkEntityBase } from '../generated/entities/file-page-chunk';
 
 export class FilePageChunkEntity extends FilePageChunkEntityBase {
 }

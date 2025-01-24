@@ -1,32 +1,33 @@
 const path = require("path");
 const utils = require("airent/resources/utils.js");
 
-function enforceRelativePath(relativePath) /* string */ {
-  return relativePath.startsWith(".") ? relativePath : `./${relativePath}`;
+function buildRelativePath(sourcePath, targetPath) /* string */ {
+  const rawRelativePath = path
+    .relative(sourcePath, targetPath)
+    .replaceAll("\\", "/");
+  return rawRelativePath.startsWith(".")
+    ? rawRelativePath
+    : `./${rawRelativePath}`;
 }
 
-function buildRelativePackage(sourcePath, targetPath, config) /* string */ {
+function buildRelativeFull(sourcePath, targetPath, config) /* string */ {
   if (!targetPath.startsWith(".")) {
     return targetPath;
   }
   const suffix = utils.getModuleSuffix(config);
-  const relativePath = enforceRelativePath(
-    path.relative(sourcePath, targetPath).replaceAll("\\", "/")
-  );
+  const relativePath = buildRelativePath(sourcePath, targetPath);
   return `${relativePath}${suffix}`;
 }
 
 function augmentConfig(config) /* void */ {
   const { libImportPath } = config.prisma;
-  config.prisma.baseLibPackage = libImportPath
-    ? buildRelativePackage(
+  config._packages.prisma = config._packages.prisma ?? {};
+  config._packages.prisma.baseToLibFull = libImportPath
+    ? buildRelativeFull(
         path.join(config.entityPath, "generated"),
         libImportPath,
         config
       )
-    : "@airent/prisma";
-  config.prisma.entityLibPackage = libImportPath
-    ? buildRelativePackage(config.entityPath, libImportPath, config)
     : "@airent/prisma";
 }
 
@@ -40,7 +41,7 @@ function augmentConfig(config) /* void */ {
  * - take: number | undefined, association-field-level key to specify limit on the field
  */
 
-// build entity.code.beforeBase
+// build entity._code.beforeBase
 
 function buildBeforeBase(entity, config) /* Code[] */ {
   const libraryImports = [];
@@ -50,7 +51,7 @@ function buildBeforeBase(entity, config) /* Code[] */ {
   }
   const airentImports = [
     "// airent imports",
-    `import { ValidatePrismaArgs, batchLoad, batchLoadTopMany, entityCompare } from '${config.prisma.baseLibPackage}';`,
+    `import { ValidatePrismaArgs, batchLoad, batchLoadTopMany, entityCompare } from '${config._packages.prisma.baseToLibFull}';`,
   ];
   const configImports = [
     "// config imports",
@@ -60,10 +61,10 @@ function buildBeforeBase(entity, config) /* Code[] */ {
 
   const entityImports = [
     "// entity imports",
-    `import { ${utils.toTitleCase(entity.name)}PrimitiveField } from './${
-      entity.strings.typePackage
-    }';`,
-    ...buildModelImports(entity),
+    `import { ${utils.toTitleCase(entity.name)}PrimitiveField } from '${
+      config._packages.baseToTypePath
+    }/${entity._strings.moduleName}';`,
+    ...buildModelImports(entity, config._packages.baseToTypePath),
   ];
 
   return [
@@ -74,12 +75,12 @@ function buildBeforeBase(entity, config) /* Code[] */ {
   ];
 }
 
-// build entity.code.beforeType
-function buildBeforeType(entity) /* Code[] */ {
-  return buildModelImports(entity);
+// build entity._code.beforeType
+function buildBeforeType(entity, config) /* Code[] */ {
+  return buildModelImports(entity, ".");
 }
 
-function buildModelImports(entity) /* Code[] */ {
+function buildModelImports(entity, relativePath) /* Code[] */ {
   const prismaAssociationTypes = entity.fields
     .filter(utils.isAssociationField)
     .filter((f) => f.isPrisma)
@@ -94,14 +95,14 @@ function buildModelImports(entity) /* Code[] */ {
         return "";
       }
       addedTypeNames.add(t.name);
-      return `import { ${utils.toTitleCase(t.name)}Model } from './${
-        t.strings.typePackage
-      }';`;
+      return `import { ${utils.toTitleCase(
+        t.name
+      )}Model } from '${relativePath}/${t._entity._strings.moduleName}';`;
     })
     .filter((line) => line.length > 0);
 }
 
-// build entity.code.afterType
+// build entity._code.afterType
 function buildAfterType(entity) /* Code[] */ {
   const primitiveFields = entity.fields
     .filter(utils.isPrimitiveField)
@@ -116,7 +117,7 @@ function buildAfterType(entity) /* Code[] */ {
   ];
 }
 
-// build entity.code.insideBase
+// build entity._code.insideBase
 
 function buildInitializeMethodLines(entity) /* Code[] */ {
   const lines = entity.fields
@@ -126,7 +127,7 @@ function buildInitializeMethodLines(entity) /* Code[] */ {
       `if (model.${f.name} !== undefined) {`,
       `  this.${f.name} = ${
         utils.isNullableField(f) ? `model.${f.name} === null ? null : ` : ""
-      }${f._type._entity.strings.entityClass}.${
+      }${f._type._entity._strings.entityClass}.${
         utils.isArrayField(f) ? "fromArray" : "fromOne"
       }(${`model.${f.name}`}, context);`,
       "}",
@@ -166,7 +167,7 @@ function buildPrismaMethodSignatureLines(
   return [
     "",
     `public static async ${prismaMethod}<`,
-    `  ENTITY extends ${entity.strings.baseClass},`,
+    `  ENTITY extends ${entity._strings.baseClass},`,
     `  T extends ${prismaArgName},`,
     ">(",
     `  this: EntityConstructor<${entity.model}, Context, ENTITY>,`,
@@ -262,12 +263,12 @@ const AFTER_CREATE_LINES = ["await (this as any).afterCreate(one, context);"];
 function buildPrismaCreateOneMethodLines(entity) /* Code[] */ {
   const beforeAndAfterHooksLines = [
     "",
-    `protected static beforeCreate<ENTITY extends ${entity.strings.baseClass}>(`,
+    `protected static beforeCreate<ENTITY extends ${entity._strings.baseClass}>(`,
     `  this: EntityConstructor<${entity.model}, Context, ENTITY>,`,
     "  _context: Context",
     "): void | Promise<void> {}",
     "",
-    `protected static afterCreate<ENTITY extends ${entity.strings.baseClass}>(`,
+    `protected static afterCreate<ENTITY extends ${entity._strings.baseClass}>(`,
     `  this: EntityConstructor<${entity.model}, Context, ENTITY>,`,
     "  _one: ENTITY,",
     "  _context: Context",
@@ -309,13 +310,13 @@ function buildPrismaUpdateOneMethodLines(entity) /* Code[] */ {
       .map((f) => `  '${f.name}',`),
     "];",
     "",
-    `protected static beforeUpdate<ENTITY extends ${entity.strings.baseClass}>(`,
+    `protected static beforeUpdate<ENTITY extends ${entity._strings.baseClass}>(`,
     `  this: EntityConstructor<${entity.model}, Context, ENTITY>,`,
     "  _oneBefore: ENTITY,",
     "  _context: Context",
     "): void | Promise<void> {}",
     "",
-    `protected static afterUpdate<ENTITY extends ${entity.strings.baseClass}>(`,
+    `protected static afterUpdate<ENTITY extends ${entity._strings.baseClass}>(`,
     `  this: EntityConstructor<${entity.model}, Context, ENTITY>,`,
     "  _oneBefore: ENTITY,",
     "  _oneAfter: ENTITY,",
@@ -346,13 +347,13 @@ const AFTER_DELETE_LINES = [
 function buildPrismaDeleteOneMethodLines(entity) /* Code[] */ {
   const beforeAndAfterHooksLines = [
     "",
-    `protected static beforeDelete<ENTITY extends ${entity.strings.baseClass}>(`,
+    `protected static beforeDelete<ENTITY extends ${entity._strings.baseClass}>(`,
     `  this: EntityConstructor<${entity.model}, Context, ENTITY>,`,
     "  _oneBefore: ENTITY,",
     "  _context: Context",
     "): void | Promise<void> {}",
     "",
-    `protected static afterDelete<ENTITY extends ${entity.strings.baseClass}>(`,
+    `protected static afterDelete<ENTITY extends ${entity._strings.baseClass}>(`,
     `  this: EntityConstructor<${entity.model}, Context, ENTITY>,`,
     "  _oneBefore: ENTITY,",
     "  _context: Context",
@@ -430,7 +431,7 @@ function buildInsideBase(entity) /* Code[] */ {
   ];
 }
 
-// build entity.fields.code.loadConfig
+// build entity.fields._code.loadConfig
 
 function buildIsLoaderGeneratable(field) /* boolean */ {
   if (field.prismaLoader === true) {
@@ -480,15 +481,15 @@ function augmentOne(entity, config, isVerbose) /* void */ {
 
   const prismaBeforeBase = buildBeforeBase(entity, config);
   const prismaInsideBase = buildInsideBase(entity);
-  const prismaBeforeType = buildBeforeType(entity);
+  const prismaBeforeType = buildBeforeType(entity, config);
   const prismaAfterType = buildAfterType(entity);
-  entity.code.beforeBase.push(...prismaBeforeBase);
-  entity.code.insideBase.push(...prismaInsideBase);
-  entity.code.beforeType.push(...prismaBeforeType);
-  entity.code.afterType.push(...prismaAfterType);
+  entity._code.beforeBase.push(...prismaBeforeBase);
+  entity._code.insideBase.push(...prismaInsideBase);
+  entity._code.beforeType.push(...prismaBeforeType);
+  entity._code.afterType.push(...prismaAfterType);
   entity.skipSelfLoader = true;
   entity.fields.filter(utils.isAssociationField).forEach((field) => {
-    const { loadConfig } = field.code;
+    const { loadConfig } = field._code;
     const isLoaderGeneratable = buildIsLoaderGeneratable(field);
     loadConfig.isLoaderGeneratable = isLoaderGeneratable;
     loadConfig.targetModelsLoader = isLoaderGeneratable

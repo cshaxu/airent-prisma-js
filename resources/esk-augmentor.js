@@ -1,4 +1,4 @@
-const utils = require('airent/resources/utils');
+const utils = require("airent/resources/utils");
 
 /** this optional plugin enables "explodeSourceKey" feature for array fields as source key
  * example in YAML:
@@ -19,7 +19,7 @@ function getLoadConfigGetterLinesWithExplodeSourceKey(field) /* Code[] */ {
   );
   if (explodeSourceKeyIndex < 0) {
     throw new Error(
-      '[AIRENT/PRISMA/ERROR] sourceKeys must include explodeSourceKey'
+      "[AIRENT/PRISMA/ERROR] sourceKeys must include explodeSourceKey"
     );
   }
   const entity = field._parent;
@@ -40,7 +40,7 @@ function getLoadConfigGetterLinesWithExplodeSourceKey(field) /* Code[] */ {
     );
   }
 
-  const { getterLines } = field.code.loadConfig;
+  const { getterLines } = field._code.loadConfig;
   if (getterLines !== undefined) {
     return getterLines;
   }
@@ -54,26 +54,29 @@ function getLoadConfigGetterLinesWithExplodeSourceKey(field) /* Code[] */ {
       (sf, i) =>
         utils.isNullableField(sf) && !utils.isNullableField(targetFields[i])
     )
-    .map((sf) => `  .filter((one) => one.${sf.strings.fieldGetter} !== null)`);
+    .map((sf) => `  .filter((one) => one.${sf._strings.fieldGetter} !== null)`);
   const mappedFields = sourceFields.map((sf, i) => {
     const rawTargetFieldName = targetFields[i].aliasOf ?? targetFields[i].name;
     if (i === explodeSourceKeyIndex) {
       return `      ${rawTargetFieldName},`;
     }
-    return `      ${rawTargetFieldName}: one.${sf.strings.fieldGetter},`;
+    return `      ${rawTargetFieldName}: one.${sf._strings.fieldGetter},`;
   });
   const filterFields = targetFilters.map((tf) => {
     const rawTargetFieldName = tf.aliasOf ?? tf.name;
     return `      ${rawTargetFieldName}: ${tf.value},`;
   });
   return [
-    'return sources',
+    "return sources",
     ...filters,
-    '  .flatMap((one) =>',
-    `    one.${explodeSourceField.strings.fieldGetter}.map((${targetFields[explodeSourceKeyIndex].aliasOf ?? targetFields[explodeSourceKeyIndex].name}) => ({`,
+    "  .flatMap((one) =>",
+    `    one.${explodeSourceField._strings.fieldGetter}.map((${
+      targetFields[explodeSourceKeyIndex].aliasOf ??
+      targetFields[explodeSourceKeyIndex].name
+    }) => ({`,
     ...mappedFields,
     ...filterFields,
-    '  })));',
+    "  })));",
   ];
 }
 
@@ -83,7 +86,7 @@ function getLoadConfigSetterLinesWithExplodeSourceKey(field) /* Code[] */ {
   );
   if (explodeSourceKeyIndex < 0) {
     throw new Error(
-      '[AIRENT/PRISMA/ERROR] sourceKeys must include explodeSourceKey'
+      "[AIRENT/PRISMA/ERROR] sourceKeys must include explodeSourceKey"
     );
   }
   const entity = field._parent;
@@ -104,7 +107,7 @@ function getLoadConfigSetterLinesWithExplodeSourceKey(field) /* Code[] */ {
     );
   }
 
-  const { setterLines } = field.code.loadConfig;
+  const { setterLines } = field._code.loadConfig;
   if (setterLines !== undefined) {
     return setterLines;
   }
@@ -114,8 +117,8 @@ function getLoadConfigSetterLinesWithExplodeSourceKey(field) /* Code[] */ {
 
   // build target mapper
   const targetKeyString = `JSON.stringify({ ${targetFields
-    .map((tf, i) => `${tf.name}: one.${targetFields[i].strings.fieldGetter}`)
-    .join(', ')} })`;
+    .map((tf, i) => `${tf.name}: one.${targetFields[i]._strings.fieldGetter}`)
+    .join(", ")} })`;
   const targetMapper = `toObjectMap(targets, (one) => ${targetKeyString}, (one) => one)`;
 
   // build source setter
@@ -125,21 +128,21 @@ function getLoadConfigSetterLinesWithExplodeSourceKey(field) /* Code[] */ {
       (sf, i) =>
         utils.isNullableField(sf) && !utils.isNullableField(targetFields[i])
     )
-    .map((sf) => `one.${sf.strings.fieldGetter} === null`)
-    .join(' || ');
+    .map((sf) => `one.${sf._strings.fieldGetter} === null`)
+    .join(" || ");
   const nullSetter =
     nullConditions.length === 0
-      ? ''
-      : `(${nullConditions}) ? ${utils.isArrayField(field) ? '[]' : 'null'} : `;
+      ? ""
+      : `(${nullConditions}) ? ${utils.isArrayField(field) ? "[]" : "null"} : `;
   const sourceKeyString = `JSON.stringify({ ${targetFields
     .map((tf, i) => {
       if (i === explodeSourceKeyIndex) {
         return tf.name;
       }
-      return `${tf.name}: one.${sourceFields[i].strings.fieldGetter}`;
+      return `${tf.name}: one.${sourceFields[i]._strings.fieldGetter}`;
     })
-    .join(', ')} })`;
-  const sourceSetter = `${nullSetter}one.${explodeSourceField.strings.fieldGetter}.map((${targetFields[explodeSourceKeyIndex].name}) => ${sourceKeyString}).filter((key) => map.has(key)).map((key) => map.get(key)!)`;
+    .join(", ")} })`;
+  const sourceSetter = `${nullSetter}one.${explodeSourceField._strings.fieldGetter}.map((${targetFields[explodeSourceKeyIndex].name}) => ${sourceKeyString}).filter((key) => map.has(key)).map((key) => map.get(key)!)`;
 
   return [
     `const map = ${targetMapper};`,
@@ -149,10 +152,10 @@ function getLoadConfigSetterLinesWithExplodeSourceKey(field) /* Code[] */ {
 
 function augmentTemplates(templates) /* void */ {
   const baseTemplate = templates.find((t) =>
-    t.name.includes('base-template.ts.ejs')
+    t.name.includes("base-template.ts.ejs")
   );
   const entityTemplate = templates.find((t) =>
-    t.name.includes('entity-template.ts.ejs')
+    t.name.includes("entity-template.ts.ejs")
   );
 
   baseTemplate.functions.originalGetLoadConfigGetterLines =

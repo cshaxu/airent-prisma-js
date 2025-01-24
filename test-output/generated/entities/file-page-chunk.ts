@@ -5,9 +5,9 @@ import { ValidatePrismaArgs, batchLoad, batchLoadTopMany, entityCompare } from '
 // config imports
 import prisma from '../../../test-sources/prisma';
 // entity imports
-import { FilePageChunkPrimitiveField } from './file-page-chunk-type';
-import { AliasedFileModel } from './aliased-file-type';
-import { FilePageModel } from './file-page-type';
+import { FilePageChunkPrimitiveField } from '../types/file-page-chunk';
+import { AliasedFileModel } from '../types/aliased-file';
+import { FilePageModel } from '../types/file-page';
 // airent imports
 import {
   AsyncLock,
@@ -26,14 +26,14 @@ import { Context } from '../../../test-sources/context';
 
 // entity imports
 import { FilePageChunk as PrismaFilePageChunk } from '@prisma/client';
-import { AliasedFileEntity } from '../aliased-file';
-import { FilePageEntity } from '../file-page';
+import { AliasedFileEntity } from '../../entities/aliased-file';
+import { FilePageEntity } from '../../entities/file-page';
 import {
   FilePageChunkFieldRequest,
   FilePageChunkResponse,
   SelectedFilePageChunkResponse,
   FilePageChunkModel,
-} from './file-page-chunk-type';
+} from '../types/file-page-chunk';
 
 export class FilePageChunkEntityBase extends BaseEntity<
   FilePageChunkModel, Context, FilePageChunkFieldRequest, FilePageChunkResponse

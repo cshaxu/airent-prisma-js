@@ -14,8 +14,8 @@ import {
   FilePageResponse,
   SelectedFilePageResponse,
   FilePageModel,
-} from './generated/file-page-type';
-import { FilePageEntityBase } from './generated/file-page-base';
+} from '../generated/types/file-page';
+import { FilePageEntityBase } from '../generated/entities/file-page';
 
 export class FilePageEntity extends FilePageEntityBase {
 }

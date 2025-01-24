@@ -14,8 +14,8 @@ import {
   AliasedFileResponse,
   SelectedAliasedFileResponse,
   AliasedFileModel,
-} from './generated/aliased-file-type';
-import { AliasedFileEntityBase } from './generated/aliased-file-base';
+} from '../generated/types/aliased-file';
+import { AliasedFileEntityBase } from '../generated/entities/aliased-file';
 
 export class AliasedFileEntity extends AliasedFileEntityBase {
 }

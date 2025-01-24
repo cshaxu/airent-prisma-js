@@ -2,6 +2,7 @@
   "type": "commonjs",
   "schemaPath": "test-output/schemas",
   "entityPath": "test-output/entities",
+  "generatedPath": "test-output/generated",
   "contextImportPath": "./test-sources/context",
   "augmentors": ["resources/augmentor.js"],
   "prisma": {
