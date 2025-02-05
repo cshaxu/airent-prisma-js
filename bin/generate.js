@@ -313,7 +313,7 @@ function mergeAll(inputSchemas, tableSchemas, config, isVerbose) {
           : polish(tableSchema, config)
         : inputSchema;
 
-      const entName = utils.toTitleCase(entity.name);
+      const entName = utils.toPascalCase(entity.name);
       const modelDefinition =
         entity.isPrisma === false ? entity.model : `Prisma${entName}`;
       const modelName = `${entName}Model`;
@@ -330,7 +330,7 @@ function mergeAll(inputSchemas, tableSchemas, config, isVerbose) {
         .filter((t) => t.isPrisma);
       const prismaModelAssociationDefinitions = prismaAssociationFields.map(
         (f) =>
-          `${f.name}?: ${utils.toTitleCase(
+          `${f.name}?: ${utils.toPascalCase(
             utils.toPrimitiveTypeName(f.type)
           )}Model${
             utils.isArrayField(f)

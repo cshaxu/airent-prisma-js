@@ -61,7 +61,7 @@ function buildBeforeBase(entity, config) /* Code[] */ {
 
   const entityImports = [
     "// entity imports",
-    `import { ${utils.toTitleCase(entity.name)}PrimitiveField } from '${
+    `import { ${utils.toPascalCase(entity.name)}PrimitiveField } from '${
       config._packages.baseToTypePath
     }/${entity._strings.moduleName}';`,
     ...buildModelImports(entity, config._packages.baseToTypePath),
@@ -95,7 +95,7 @@ function buildModelImports(entity, relativePath) /* Code[] */ {
         return "";
       }
       addedTypeNames.add(t.name);
-      return `import { ${utils.toTitleCase(
+      return `import { ${utils.toPascalCase(
         t.name
       )}Model } from '${relativePath}/${t._entity._strings.moduleName}';`;
     })
@@ -111,7 +111,7 @@ function buildAfterType(entity) /* Code[] */ {
   return [
     "",
     ...(entity.deprecated ? ["/** @deprecated */"] : []),
-    `export type ${utils.toTitleCase(
+    `export type ${utils.toPascalCase(
       entity.name
     )}PrimitiveField = ${primitiveFields};`,
   ];
@@ -153,7 +153,7 @@ function buildPrismaPassThruMethodLines(entity, prismaMethod) /* Code[] */ {
 }
 
 function buildPrismaArgName(entity, prismaMethod) /* Code */ {
-  return `Prisma.${utils.toTitleCase(entity.name)}${utils.toTitleCase(
+  return `Prisma.${utils.toPascalCase(entity.name)}${utils.toPascalCase(
     prismaMethod
   )}Args`;
 }
@@ -302,7 +302,7 @@ const AFTER_UPDATE_LINES = [
 function buildPrismaUpdateOneMethodLines(entity) /* Code[] */ {
   const beforeAndAfterHooksLines = [
     "",
-    `protected static PRIMITIVE_FIELDS: ${utils.toTitleCase(
+    `protected static PRIMITIVE_FIELDS: ${utils.toPascalCase(
       entity.name
     )}PrimitiveField[] = [`,
     ...entity.fields
@@ -320,7 +320,7 @@ function buildPrismaUpdateOneMethodLines(entity) /* Code[] */ {
     `  this: EntityConstructor<${entity.model}, Context, ENTITY>,`,
     "  _oneBefore: ENTITY,",
     "  _oneAfter: ENTITY,",
-    `  _updatedFields: ${utils.toTitleCase(entity.name)}PrimitiveField[],`,
+    `  _updatedFields: ${utils.toPascalCase(entity.name)}PrimitiveField[],`,
     "  _context: Context",
     "): void | Promise<void> {}",
   ];
@@ -449,7 +449,7 @@ function buildAssociationFieldModelsLoader(field, config) /* Code */ {
 
   const entity = field._type._entity;
 
-  const entName = utils.toTitleCase(entity.name);
+  const entName = utils.toPascalCase(entity.name);
   const prismaModelName = utils.toCamelCase(entName);
   const loader = field.orderBy?.length
     ? `(query) => prisma.${prismaModelName}.findMany({ ...query, orderBy: { ${field.orderBy
