@@ -119,7 +119,7 @@ function getLoadConfigSetterLinesWithExplodeSourceKey(field) /* Code[] */ {
   const targetKeyString = `JSON.stringify({ ${targetFields
     .map((tf, i) => `${tf.name}: one.${targetFields[i]._strings.fieldGetter}`)
     .join(", ")} })`;
-  const targetMapper = `toObjectMap(targets, (one) => ${targetKeyString}, (one) => one)`;
+  const targetMapper = `toObjectMap(targets, (one) => ${targetKeyString})`;
 
   // build source setter
 
