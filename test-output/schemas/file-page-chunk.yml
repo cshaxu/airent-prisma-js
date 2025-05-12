@@ -18,6 +18,8 @@ types:
     import: '@prisma/client'
   - name: FilePageChunkModel
     define: 'PrismaFilePageChunk & { file?: AliasedFileModel; page?: FilePageModel }'
+keys:
+  - id
 fields:
   - id: 1
     name: id

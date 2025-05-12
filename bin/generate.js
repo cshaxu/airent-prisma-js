@@ -91,7 +91,7 @@ const NATIVE_PRISMA_TYPES = {
   Bytes: "Buffer",
 };
 
-function buildTableSchema(table, enums, refs, aliasMap, config) {
+function buildTableSchema(table, enums, refs, aliasMap) {
   const { name: tableName } = table;
   const entityName = aliasMap[tableName] ?? tableName;
 
@@ -107,6 +107,7 @@ function buildTableSchema(table, enums, refs, aliasMap, config) {
         import: "@prisma/client",
       },
     ],
+    keys: table.fields.filter((f) => f.pk).map((f) => f.name),
     fields: [],
   };
 
@@ -124,6 +125,7 @@ function buildTableSchema(table, enums, refs, aliasMap, config) {
     } else if (rawTypeName === "Json") {
       field.type = `PrismaJsonValue${typeSuffix}`;
       field.strategy = "primitive";
+      field.cast = true;
       if (!existingTypeNames.has(rawTypeName)) {
         entity.types.push({
           name: "PrismaJsonValue",
@@ -188,9 +190,7 @@ async function loadTableSchemas(aliasMap, config, isVerbose) {
       { table: b.tableName, fields: b.fieldNames, relation: b.relation },
     ]);
   const tables = database.schemas.flatMap((s) => s.tables);
-  return tables.map((table) =>
-    buildTableSchema(table, enums, refs, aliasMap, config)
-  );
+  return tables.map((table) => buildTableSchema(table, enums, refs, aliasMap));
 }
 
 function polish(tableSchema, config) {
@@ -224,6 +224,7 @@ function mergeOne(inputSchema, tableSchema, config, isVerbose) {
     model: tableModel,
     prisma: tablePrisma,
     types: tableTypesRaw,
+    keys: tableKeys,
     fields: tableFieldsRaw,
   } = tableSchema;
   const {
@@ -232,6 +233,7 @@ function mergeOne(inputSchema, tableSchema, config, isVerbose) {
     model: inputModel,
     prisma: inputPrismaRaw,
     types: inputTypesRaw,
+    keys: inputKeysRaw,
     fields: inputFieldsRaw,
     ...extras
   } = inputSchema;
@@ -285,13 +287,17 @@ function mergeOne(inputSchema, tableSchema, config, isVerbose) {
   const inputFields = inputFieldsRaw ?? [];
   const fields = [...tableFields, ...inputFields];
 
+  // build keys
+  const inputKeys = inputKeysRaw ?? [];
+  const keys = [...tableKeys, ...inputKeys];
+
   // build types
   const inputTypes = inputTypesRaw ?? [];
   const inputTypeNames = new Set(inputTypes.map((t) => t.name));
   const tableTypes = tableTypesRaw.filter((f) => !inputTypeNames.has(f.name));
   const types = [...tableTypes, ...inputTypes];
 
-  return { name: tableName, model, prisma, ...extras, types, fields };
+  return { name: tableName, model, prisma, ...extras, types, keys, fields };
 }
 
 function mergeAll(inputSchemas, tableSchemas, config, isVerbose) {
@@ -367,6 +373,9 @@ function reconcile(schemas) {
     return entityMap;
   }, {});
   return schemas.map((entity) => {
+    const keys = entity.keys.map(
+      (name) => entityAliasMap[entity.name][name] ?? name
+    );
     const fields = entity.fields.map((field) => {
       if (!utils.isAssociationField(field)) {
         return field;
@@ -378,7 +387,7 @@ function reconcile(schemas) {
       );
       return { ...field, targetKeys };
     });
-    return { ...entity, fields };
+    return { ...entity, keys, fields };
   });
 }
 

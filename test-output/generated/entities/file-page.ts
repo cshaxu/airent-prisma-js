@@ -39,12 +39,12 @@ import {
 export class FilePageEntityBase extends BaseEntity<
   FilePageModel, Context, FilePageFieldRequest, FilePageResponse
 > {
-  public id: string;
-  public createdAt: Date;
-  public updatedAt: Date;
-  public fileId: string;
-  public pageId: number;
-  public lines: PrismaJsonValue;
+  public id!: string;
+  public createdAt!: Date;
+  public updatedAt!: Date;
+  public fileId!: string;
+  public pageId!: number;
+  public lines!: PrismaJsonValue;
 
   protected file?: AliasedFileEntity;
 
@@ -57,15 +57,78 @@ export class FilePageEntityBase extends BaseEntity<
     lock: AsyncLock,
   ) {
     super(context, group, lock);
-
-    this.id = model.id;
-    this.createdAt = model.createdAt;
-    this.updatedAt = model.updatedAt;
-    this.fileId = model.fileId;
-    this.pageId = model.pageId;
-    this.lines = model.lines;
-
+    this.fromModel(model);
     this.initialize(model, context);
+  }
+
+  public fromModel(model: Partial<FilePageModel>): void {
+    if ('id' in model && model['id'] !== undefined) {
+      this.id = model.id;
+    }
+    if ('createdAt' in model && model['createdAt'] !== undefined) {
+      this.createdAt = model.createdAt;
+    }
+    if ('updatedAt' in model && model['updatedAt'] !== undefined) {
+      this.updatedAt = model.updatedAt;
+    }
+    if ('fileId' in model && model['fileId'] !== undefined) {
+      this.fileId = model.fileId;
+    }
+    if ('pageId' in model && model['pageId'] !== undefined) {
+      this.pageId = model.pageId;
+    }
+    if ('lines' in model && model['lines'] !== undefined) {
+      this.lines = model.lines as unknown as PrismaJsonValue;
+    }
+    this.file = undefined;
+    this.chunks = undefined;
+  }
+
+  public toModel(): Partial<FilePageModel> {
+    return {
+      id: this.id,
+      createdAt: this.createdAt,
+      updatedAt: this.updatedAt,
+      fileId: this.fileId,
+      pageId: this.pageId,
+      lines: this.lines as any,
+    };
+  }
+
+  /** mutators */
+
+  public async reload(): Promise<this> {
+    const one = await FilePageEntityBase.findUniqueOrThrow({
+      where: {
+        id: this.id,
+      },
+    }, this.context);
+    const model = one.toModel();
+    this.fromModel(model);
+    return this;
+  }
+
+  public async save(): Promise<this> {
+    const one = await FilePageEntityBase.update({
+      where: {
+        id: this.id,
+      },
+      data: this.toModel() as Prisma.FilePageUncheckedUpdateInput,
+    }, this.context);
+    const model = one.toModel();
+    this.fromModel(model);
+    return this;
+  }
+
+  public async delete(): Promise<this> {
+    const one = await FilePageEntityBase.delete({
+      where: {
+        id: this.id,
+      },
+    }, this.context);
+    const model = one.toModel();
+    this.fromModel(model);
+    return this;
   }
 
   public async present<S extends FilePageFieldRequest>(fieldRequest: S): Promise<SelectedFilePageResponse<S>> {

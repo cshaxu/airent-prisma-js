@@ -24,6 +24,8 @@ types:
     import: '@prisma/client'
   - name: AliasedFileModel
     define: 'PrismaAliasedFile & { pages?: FilePageModel[]; chunks?: FilePageChunkModel[] }'
+keys:
+  - id
 fields:
   - id: 3
     name: size

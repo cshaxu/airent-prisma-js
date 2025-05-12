@@ -117,6 +117,59 @@ function buildAfterType(entity) /* Code[] */ {
   ];
 }
 
+function buildReloaderLines(entity) /* Code[] */ {
+  const fieldAliasMap = entity.fields.reduce((acc, f) => {
+    acc[f.name] = f.aliasOf ?? f.name;
+    return acc;
+  }, {});
+  return [
+    `const one = await ${entity._strings.baseClass}.findUniqueOrThrow({`,
+    "  where: {",
+    ...entity.keys.map((k) => `    ${fieldAliasMap[k]}: this.${k},`),
+    "  },",
+    "}, this.context);",
+    "const model = one.toModel();",
+    "this.fromModel(model);",
+    "return this;",
+  ];
+}
+
+function buildSaverLines(entity) /* Code[] */ {
+  const fieldAliasMap = entity.fields.reduce((acc, f) => {
+    acc[f.name] = f.aliasOf ?? f.name;
+    return acc;
+  }, {});
+  const prismaModelName = utils.toPascalCase(entity.name);
+  return [
+    `const one = await ${entity._strings.baseClass}.update({`,
+    "  where: {",
+    ...entity.keys.map((k) => `    ${fieldAliasMap[k]}: this.${k},`),
+    "  },",
+    `  data: this.toModel() as Prisma.${prismaModelName}UncheckedUpdateInput,`,
+    "}, this.context);",
+    "const model = one.toModel();",
+    "this.fromModel(model);",
+    "return this;",
+  ];
+}
+
+function buildDeleterLines(entity) /* Code[] */ {
+  const fieldAliasMap = entity.fields.reduce((acc, f) => {
+    acc[f.name] = f.aliasOf ?? f.name;
+    return acc;
+  }, {});
+  return [
+    `const one = await ${entity._strings.baseClass}.delete({`,
+    "  where: {",
+    ...entity.keys.map((k) => `    ${fieldAliasMap[k]}: this.${k},`),
+    "  },",
+    "}, this.context);",
+    "const model = one.toModel();",
+    "this.fromModel(model);",
+    "return this;",
+  ];
+}
+
 // build entity._code.insideBase
 
 function buildInitializeMethodLines(entity) /* Code[] */ {
@@ -487,6 +540,9 @@ function augmentOne(entity, config, isVerbose) /* void */ {
   entity._code.insideBase.push(...prismaInsideBase);
   entity._code.beforeType.push(...prismaBeforeType);
   entity._code.afterType.push(...prismaAfterType);
+  entity._code.reloaderLines = buildReloaderLines(entity);
+  entity._code.saverLines = buildSaverLines(entity);
+  entity._code.deleterLines = buildDeleterLines(entity);
   entity.skipSelfLoader = true;
   entity.fields.filter(utils.isAssociationField).forEach((field) => {
     const { loadConfig } = field._code;

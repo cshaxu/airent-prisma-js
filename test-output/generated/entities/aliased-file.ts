@@ -39,9 +39,9 @@ import {
 export class AliasedFileEntityBase extends BaseEntity<
   AliasedFileModel, Context, AliasedFileFieldRequest, AliasedFileResponse
 > {
-  public size: number;
-  public type: PrismaFileType;
-  public id: string;
+  public size!: number;
+  public type!: PrismaFileType;
+  public id!: string;
 
   /** @deprecated */
   protected pages?: FilePageEntity[];
@@ -55,12 +55,66 @@ export class AliasedFileEntityBase extends BaseEntity<
     lock: AsyncLock,
   ) {
     super(context, group, lock);
-
-    this.size = model.size;
-    this.type = model.type;
-    this.id = model.id;
-
+    this.fromModel(model);
     this.initialize(model, context);
+  }
+
+  public fromModel(model: Partial<AliasedFileModel>): void {
+    if ('size' in model && model['size'] !== undefined) {
+      this.size = model.size;
+    }
+    if ('type' in model && model['type'] !== undefined) {
+      this.type = model.type;
+    }
+    if ('id' in model && model['id'] !== undefined) {
+      this.id = model.id;
+    }
+    this.pages = undefined;
+    this.chunks = undefined;
+  }
+
+  public toModel(): Partial<AliasedFileModel> {
+    return {
+      size: this.size,
+      type: this.type,
+      id: this.id,
+    };
+  }
+
+  /** mutators */
+
+  public async reload(): Promise<this> {
+    const one = await AliasedFileEntityBase.findUniqueOrThrow({
+      where: {
+        id: this.id,
+      },
+    }, this.context);
+    const model = one.toModel();
+    this.fromModel(model);
+    return this;
+  }
+
+  public async save(): Promise<this> {
+    const one = await AliasedFileEntityBase.update({
+      where: {
+        id: this.id,
+      },
+      data: this.toModel() as Prisma.AliasedFileUncheckedUpdateInput,
+    }, this.context);
+    const model = one.toModel();
+    this.fromModel(model);
+    return this;
+  }
+
+  public async delete(): Promise<this> {
+    const one = await AliasedFileEntityBase.delete({
+      where: {
+        id: this.id,
+      },
+    }, this.context);
+    const model = one.toModel();
+    this.fromModel(model);
+    return this;
   }
 
   public async present<S extends AliasedFileFieldRequest>(fieldRequest: S): Promise<SelectedAliasedFileResponse<S>> {

@@ -19,6 +19,8 @@ types:
     import: '@prisma/client/runtime/library'
   - name: FilePageModel
     define: 'PrismaFilePage & { file?: AliasedFileModel; chunks?: FilePageChunkModel[] }'
+keys:
+  - id
 fields:
   - id: 1
     name: id
@@ -54,6 +56,7 @@ fields:
     name: lines
     type: PrismaJsonValue
     strategy: primitive
+    cast: true
     isPrisma: true
     internal: false
   - id: 7

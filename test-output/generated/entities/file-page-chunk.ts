@@ -38,14 +38,14 @@ import {
 export class FilePageChunkEntityBase extends BaseEntity<
   FilePageChunkModel, Context, FilePageChunkFieldRequest, FilePageChunkResponse
 > {
-  public id: string;
-  public createdAt: Date;
-  public updatedAt: Date;
-  public fileId: string;
-  public pageId: number;
-  public chunkId: number;
-  public startLineId: number;
-  public endLineId: number;
+  public id!: string;
+  public createdAt!: Date;
+  public updatedAt!: Date;
+  public fileId!: string;
+  public pageId!: number;
+  public chunkId!: number;
+  public startLineId!: number;
+  public endLineId!: number;
 
   protected file?: AliasedFileEntity;
 
@@ -58,17 +58,86 @@ export class FilePageChunkEntityBase extends BaseEntity<
     lock: AsyncLock,
   ) {
     super(context, group, lock);
-
-    this.id = model.id;
-    this.createdAt = model.createdAt;
-    this.updatedAt = model.updatedAt;
-    this.fileId = model.fileId;
-    this.pageId = model.pageId;
-    this.chunkId = model.chunkId;
-    this.startLineId = model.startLineId;
-    this.endLineId = model.endLineId;
-
+    this.fromModel(model);
     this.initialize(model, context);
+  }
+
+  public fromModel(model: Partial<FilePageChunkModel>): void {
+    if ('id' in model && model['id'] !== undefined) {
+      this.id = model.id;
+    }
+    if ('createdAt' in model && model['createdAt'] !== undefined) {
+      this.createdAt = model.createdAt;
+    }
+    if ('updatedAt' in model && model['updatedAt'] !== undefined) {
+      this.updatedAt = model.updatedAt;
+    }
+    if ('fileId' in model && model['fileId'] !== undefined) {
+      this.fileId = model.fileId;
+    }
+    if ('pageId' in model && model['pageId'] !== undefined) {
+      this.pageId = model.pageId;
+    }
+    if ('chunkId' in model && model['chunkId'] !== undefined) {
+      this.chunkId = model.chunkId;
+    }
+    if ('startLineId' in model && model['startLineId'] !== undefined) {
+      this.startLineId = model.startLineId;
+    }
+    if ('endLineId' in model && model['endLineId'] !== undefined) {
+      this.endLineId = model.endLineId;
+    }
+    this.file = undefined;
+    this.page = undefined;
+  }
+
+  public toModel(): Partial<FilePageChunkModel> {
+    return {
+      id: this.id,
+      createdAt: this.createdAt,
+      updatedAt: this.updatedAt,
+      fileId: this.fileId,
+      pageId: this.pageId,
+      chunkId: this.chunkId,
+      startLineId: this.startLineId,
+      endLineId: this.endLineId,
+    };
+  }
+
+  /** mutators */
+
+  public async reload(): Promise<this> {
+    const one = await FilePageChunkEntityBase.findUniqueOrThrow({
+      where: {
+        id: this.id,
+      },
+    }, this.context);
+    const model = one.toModel();
+    this.fromModel(model);
+    return this;
+  }
+
+  public async save(): Promise<this> {
+    const one = await FilePageChunkEntityBase.update({
+      where: {
+        id: this.id,
+      },
+      data: this.toModel() as Prisma.FilePageChunkUncheckedUpdateInput,
+    }, this.context);
+    const model = one.toModel();
+    this.fromModel(model);
+    return this;
+  }
+
+  public async delete(): Promise<this> {
+    const one = await FilePageChunkEntityBase.delete({
+      where: {
+        id: this.id,
+      },
+    }, this.context);
+    const model = one.toModel();
+    this.fromModel(model);
+    return this;
   }
 
   public async present<S extends FilePageChunkFieldRequest>(fieldRequest: S): Promise<SelectedFilePageChunkResponse<S>> {
