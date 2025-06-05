@@ -246,7 +246,9 @@ function mergeOne(inputSchema, tableSchema, config, isVerbose) {
   const prisma = { ...tablePrisma, ...inputPrisma };
 
   // build fields
-  const inputFieldNames = new Set((inputFieldsRaw ?? []).map((f) => f.name));
+  const inputFieldNames = new Set(
+    (inputFieldsRaw ?? []).map((f) => f.aliasOf ?? f.name)
+  );
   const skipPrismaFields = new Set(inputPrisma?.skipFields ?? []);
   const internalPrismaFields = new Set(inputPrisma?.internalFields ?? []);
   const externalPrismaFields = new Set(inputPrisma?.externalFields ?? []);
