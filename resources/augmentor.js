@@ -141,11 +141,15 @@ function buildSaverLines(entity) /* Code[] */ {
   }, {});
   const prismaModelName = utils.toPascalCase(entity.name);
   return [
+    "const dirtyModel = this.toDirtyModel();",
+    "if (Object.keys(dirtyModel).length === 0) {",
+    "  return this;",
+    "}",
     `const one = await ${entity._strings.baseClass}.update({`,
     "  where: {",
     ...entity.keys.map((k) => `    ${fieldAliasMap[k]}: this.${k},`),
     "  },",
-    `  data: this.toModel() as Prisma.${prismaModelName}UncheckedUpdateInput,`,
+    `  data: dirtyModel as Prisma.${prismaModelName}UncheckedUpdateInput,`,
     "}, this.context);",
     "const model = one.toModel();",
     "this.fromModel(model);",

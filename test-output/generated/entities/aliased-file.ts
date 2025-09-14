@@ -39,6 +39,8 @@ import {
 export class AliasedFileEntityBase extends BaseEntity<
   AliasedFileModel, Context, AliasedFileFieldRequest, AliasedFileResponse
 > {
+  private originalModel: AliasedFileModel;
+
   public size!: number;
   public type!: PrismaFileType;
   public id!: string;
@@ -55,6 +57,7 @@ export class AliasedFileEntityBase extends BaseEntity<
     lock: AsyncLock,
   ) {
     super(context, group, lock);
+    this.originalModel = { ...model };
     this.fromModel(model);
     this.initialize(model, context);
   }
@@ -81,6 +84,20 @@ export class AliasedFileEntityBase extends BaseEntity<
     };
   }
 
+  public toDirtyModel(): Partial<AliasedFileModel> {
+    const dirtyModel: Partial<AliasedFileModel> = {};
+    if ('size' in this.originalModel && this.originalModel['size'] !== this.size) {
+      dirtyModel['size'] = this.size;
+    }
+    if ('type' in this.originalModel && this.originalModel['type'] !== this.type) {
+      dirtyModel['type'] = this.type;
+    }
+    if ('id' in this.originalModel && this.originalModel['id'] !== this.id) {
+      dirtyModel['id'] = this.id;
+    }
+    return dirtyModel;
+  }
+
   /** mutators */
 
   public async reload(): Promise<this> {
@@ -95,11 +112,15 @@ export class AliasedFileEntityBase extends BaseEntity<
   }
 
   public async save(): Promise<this> {
+    const dirtyModel = this.toDirtyModel();
+    if (Object.keys(dirtyModel).length === 0) {
+      return this;
+    }
     const one = await AliasedFileEntityBase.update({
       where: {
         id: this.id,
       },
-      data: this.toModel() as Prisma.AliasedFileUncheckedUpdateInput,
+      data: dirtyModel as Prisma.AliasedFileUncheckedUpdateInput,
     }, this.context);
     const model = one.toModel();
     this.fromModel(model);

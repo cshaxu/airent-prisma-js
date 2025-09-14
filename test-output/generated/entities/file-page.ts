@@ -39,6 +39,8 @@ import {
 export class FilePageEntityBase extends BaseEntity<
   FilePageModel, Context, FilePageFieldRequest, FilePageResponse
 > {
+  private originalModel: FilePageModel;
+
   public id!: string;
   public createdAt!: Date;
   public updatedAt!: Date;
@@ -57,6 +59,7 @@ export class FilePageEntityBase extends BaseEntity<
     lock: AsyncLock,
   ) {
     super(context, group, lock);
+    this.originalModel = { ...model };
     this.fromModel(model);
     this.initialize(model, context);
   }
@@ -95,6 +98,29 @@ export class FilePageEntityBase extends BaseEntity<
     };
   }
 
+  public toDirtyModel(): Partial<FilePageModel> {
+    const dirtyModel: Partial<FilePageModel> = {};
+    if ('id' in this.originalModel && this.originalModel['id'] !== this.id) {
+      dirtyModel['id'] = this.id;
+    }
+    if ('createdAt' in this.originalModel && this.originalModel['createdAt'] !== this.createdAt) {
+      dirtyModel['createdAt'] = this.createdAt;
+    }
+    if ('updatedAt' in this.originalModel && this.originalModel['updatedAt'] !== this.updatedAt) {
+      dirtyModel['updatedAt'] = this.updatedAt;
+    }
+    if ('fileId' in this.originalModel && this.originalModel['fileId'] !== this.fileId) {
+      dirtyModel['fileId'] = this.fileId;
+    }
+    if ('pageId' in this.originalModel && this.originalModel['pageId'] !== this.pageId) {
+      dirtyModel['pageId'] = this.pageId;
+    }
+    if ('lines' in this.originalModel && JSON.stringify(this.originalModel['lines']) !== JSON.stringify(this.lines)) {
+      dirtyModel['lines'] = this.lines as any;
+    }
+    return dirtyModel;
+  }
+
   /** mutators */
 
   public async reload(): Promise<this> {
@@ -109,11 +135,15 @@ export class FilePageEntityBase extends BaseEntity<
   }
 
   public async save(): Promise<this> {
+    const dirtyModel = this.toDirtyModel();
+    if (Object.keys(dirtyModel).length === 0) {
+      return this;
+    }
     const one = await FilePageEntityBase.update({
       where: {
         id: this.id,
       },
-      data: this.toModel() as Prisma.FilePageUncheckedUpdateInput,
+      data: dirtyModel as Prisma.FilePageUncheckedUpdateInput,
     }, this.context);
     const model = one.toModel();
     this.fromModel(model);
