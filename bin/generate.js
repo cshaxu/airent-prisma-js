@@ -122,6 +122,9 @@ function buildTableSchema(table, enums, refs, aliasMap) {
     if (nativeType) {
       field.type = `${nativeType}${typeSuffix}`;
       field.strategy = "primitive";
+    } else if (rawTypeName === "String[]") {
+      field.type = `string[]${typeSuffix}`;
+      field.strategy = "primitive";
     } else if (rawTypeName === "Json") {
       field.type = `PrismaJsonValue${typeSuffix}`;
       field.strategy = "primitive";
