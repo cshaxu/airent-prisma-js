@@ -6,6 +6,7 @@ Table File {
   id String [pk]
   createdAt DateTime [default: `now()`, not null]
   size Int [not null]
+  tags String[] [not null]
   type FileType [not null]
   pages FilePage [not null]
   chunks FilePageChunk [not null]

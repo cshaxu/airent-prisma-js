@@ -39,7 +39,7 @@ import {
 export class FilePageEntityBase extends BaseEntity<
   FilePageModel, Context, FilePageFieldRequest, FilePageResponse
 > {
-  private originalModel: FilePageModel;
+  private _originalModel: FilePageModel;
 
   public id!: string;
   public createdAt!: Date;
@@ -59,29 +59,35 @@ export class FilePageEntityBase extends BaseEntity<
     lock: AsyncLock,
   ) {
     super(context, group, lock);
-    this.originalModel = { ...model };
+    this._originalModel = { ...model };
     this.fromModel(model);
     this.initialize(model, context);
   }
 
   public fromModel(model: Partial<FilePageModel>): void {
     if ('id' in model && model['id'] !== undefined) {
+      this._originalModel['id'] = model['id'];
       this.id = model.id;
     }
     if ('createdAt' in model && model['createdAt'] !== undefined) {
-      this.createdAt = model.createdAt;
+      this._originalModel['createdAt'] = model['createdAt'];
+      this.createdAt = structuredClone(model.createdAt);
     }
     if ('updatedAt' in model && model['updatedAt'] !== undefined) {
-      this.updatedAt = model.updatedAt;
+      this._originalModel['updatedAt'] = model['updatedAt'];
+      this.updatedAt = structuredClone(model.updatedAt);
     }
     if ('fileId' in model && model['fileId'] !== undefined) {
+      this._originalModel['fileId'] = model['fileId'];
       this.fileId = model.fileId;
     }
     if ('pageId' in model && model['pageId'] !== undefined) {
+      this._originalModel['pageId'] = model['pageId'];
       this.pageId = model.pageId;
     }
     if ('lines' in model && model['lines'] !== undefined) {
-      this.lines = model.lines as unknown as PrismaJsonValue;
+      this._originalModel['lines'] = model['lines'];
+      this.lines = structuredClone(model.lines) as unknown as PrismaJsonValue;
     }
     this.file = undefined;
     this.chunks = undefined;
@@ -90,33 +96,33 @@ export class FilePageEntityBase extends BaseEntity<
   public toModel(): Partial<FilePageModel> {
     return {
       id: this.id,
-      createdAt: this.createdAt,
-      updatedAt: this.updatedAt,
+      createdAt: structuredClone(this.createdAt),
+      updatedAt: structuredClone(this.updatedAt),
       fileId: this.fileId,
       pageId: this.pageId,
-      lines: this.lines as any,
+      lines: structuredClone(this.lines) as any,
     };
   }
 
   public toDirtyModel(): Partial<FilePageModel> {
     const dirtyModel: Partial<FilePageModel> = {};
-    if ('id' in this.originalModel && this.originalModel['id'] !== this.id) {
+    if ('id' in this._originalModel && this._originalModel['id'] !== this.id) {
       dirtyModel['id'] = this.id;
     }
-    if ('createdAt' in this.originalModel && this.originalModel['createdAt'] !== this.createdAt) {
-      dirtyModel['createdAt'] = this.createdAt;
+    if ('createdAt' in this._originalModel && JSON.stringify(this._originalModel['createdAt']) !== JSON.stringify(this.createdAt)) {
+      dirtyModel['createdAt'] = structuredClone(this.createdAt);
     }
-    if ('updatedAt' in this.originalModel && this.originalModel['updatedAt'] !== this.updatedAt) {
-      dirtyModel['updatedAt'] = this.updatedAt;
+    if ('updatedAt' in this._originalModel && JSON.stringify(this._originalModel['updatedAt']) !== JSON.stringify(this.updatedAt)) {
+      dirtyModel['updatedAt'] = structuredClone(this.updatedAt);
     }
-    if ('fileId' in this.originalModel && this.originalModel['fileId'] !== this.fileId) {
+    if ('fileId' in this._originalModel && this._originalModel['fileId'] !== this.fileId) {
       dirtyModel['fileId'] = this.fileId;
     }
-    if ('pageId' in this.originalModel && this.originalModel['pageId'] !== this.pageId) {
+    if ('pageId' in this._originalModel && this._originalModel['pageId'] !== this.pageId) {
       dirtyModel['pageId'] = this.pageId;
     }
-    if ('lines' in this.originalModel && JSON.stringify(this.originalModel['lines']) !== JSON.stringify(this.lines)) {
-      dirtyModel['lines'] = this.lines as any;
+    if ('lines' in this._originalModel && JSON.stringify(this._originalModel['lines']) !== JSON.stringify(this.lines)) {
+      dirtyModel['lines'] = structuredClone(this.lines) as any;
     }
     return dirtyModel;
   }

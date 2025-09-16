@@ -15,16 +15,18 @@ export type AliasedFileModel = PrismaAliasedFile & { pages?: FilePageModel[]; ch
 
 export type AliasedFileFieldRequest = {
   size?: boolean;
+  tags?: boolean;
   type?: boolean;
   chunks?: FilePageChunkFieldRequest;
 };
 
 export type AliasedFileResponse = {
   size?: number;
+  tags?: string[];
   type?: PrismaFileType;
   chunks?: FilePageChunkResponse[];
 };
 
 export type SelectedAliasedFileResponse<S extends AliasedFileFieldRequest> = Select<AliasedFileResponse, S>;
 
-export type AliasedFilePrimitiveField = 'size' | 'type' | 'id';
+export type AliasedFilePrimitiveField = 'size' | 'tags' | 'type' | 'id';

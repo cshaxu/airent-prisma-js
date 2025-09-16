@@ -81,14 +81,15 @@ async function loadDbml(dbmlFilePath, isVerbose) {
 }
 
 const NATIVE_PRISMA_TYPES = {
-  String: "string",
-  Boolean: "boolean",
-  Int: "number",
   BigInt: "bigint",
-  Float: "number",
-  Decimal: "number",
-  DateTime: "Date",
+  Boolean: "boolean",
   Bytes: "Buffer",
+  DateTime: "Date",
+  Decimal: "number",
+  Float: "number",
+  Int: "number",
+  String: "string",
+  "String[]": "string[]",
 };
 
 function buildTableSchema(table, enums, refs, aliasMap) {
@@ -121,9 +122,6 @@ function buildTableSchema(table, enums, refs, aliasMap) {
     const nativeType = NATIVE_PRISMA_TYPES[rawTypeName];
     if (nativeType) {
       field.type = `${nativeType}${typeSuffix}`;
-      field.strategy = "primitive";
-    } else if (rawTypeName === "String[]") {
-      field.type = `string[]${typeSuffix}`;
       field.strategy = "primitive";
     } else if (rawTypeName === "Json") {
       field.type = `PrismaJsonValue${typeSuffix}`;
@@ -342,7 +340,7 @@ function mergeAll(inputSchemas, tableSchemas, config, isVerbose) {
       const prismaModelAssociationDefinitions = prismaAssociationFields.map(
         (f) =>
           `${f.name}?: ${utils.toPascalCase(
-            utils.toPrimitiveTypeName(f.type)
+            utils.toSingularTypeName(f.type)
           )}Model${
             utils.isArrayField(f)
               ? "[]"
@@ -385,7 +383,7 @@ function reconcile(schemas) {
       if (!utils.isAssociationField(field)) {
         return field;
       }
-      const entName = utils.toPrimitiveTypeName(field.type);
+      const entName = utils.toSingularTypeName(field.type);
       const fieldAliasMap = entityAliasMap[entName];
       const targetKeys = field.targetKeys.map(
         (name) => fieldAliasMap[name] ?? name

@@ -39,9 +39,10 @@ import {
 export class AliasedFileEntityBase extends BaseEntity<
   AliasedFileModel, Context, AliasedFileFieldRequest, AliasedFileResponse
 > {
-  private originalModel: AliasedFileModel;
+  private _originalModel: AliasedFileModel;
 
   public size!: number;
+  public tags!: string[];
   public type!: PrismaFileType;
   public id!: string;
 
@@ -57,19 +58,26 @@ export class AliasedFileEntityBase extends BaseEntity<
     lock: AsyncLock,
   ) {
     super(context, group, lock);
-    this.originalModel = { ...model };
+    this._originalModel = { ...model };
     this.fromModel(model);
     this.initialize(model, context);
   }
 
   public fromModel(model: Partial<AliasedFileModel>): void {
     if ('size' in model && model['size'] !== undefined) {
+      this._originalModel['size'] = model['size'];
       this.size = model.size;
     }
+    if ('tags' in model && model['tags'] !== undefined) {
+      this._originalModel['tags'] = model['tags'];
+      this.tags = structuredClone(model.tags);
+    }
     if ('type' in model && model['type'] !== undefined) {
-      this.type = model.type;
+      this._originalModel['type'] = model['type'];
+      this.type = structuredClone(model.type);
     }
     if ('id' in model && model['id'] !== undefined) {
+      this._originalModel['id'] = model['id'];
       this.id = model.id;
     }
     this.pages = undefined;
@@ -79,20 +87,24 @@ export class AliasedFileEntityBase extends BaseEntity<
   public toModel(): Partial<AliasedFileModel> {
     return {
       size: this.size,
-      type: this.type,
+      tags: structuredClone(this.tags),
+      type: structuredClone(this.type),
       id: this.id,
     };
   }
 
   public toDirtyModel(): Partial<AliasedFileModel> {
     const dirtyModel: Partial<AliasedFileModel> = {};
-    if ('size' in this.originalModel && this.originalModel['size'] !== this.size) {
+    if ('size' in this._originalModel && this._originalModel['size'] !== this.size) {
       dirtyModel['size'] = this.size;
     }
-    if ('type' in this.originalModel && this.originalModel['type'] !== this.type) {
-      dirtyModel['type'] = this.type;
+    if ('tags' in this._originalModel && JSON.stringify(this._originalModel['tags']) !== JSON.stringify(this.tags)) {
+      dirtyModel['tags'] = structuredClone(this.tags);
     }
-    if ('id' in this.originalModel && this.originalModel['id'] !== this.id) {
+    if ('type' in this._originalModel && JSON.stringify(this._originalModel['type']) !== JSON.stringify(this.type)) {
+      dirtyModel['type'] = structuredClone(this.type);
+    }
+    if ('id' in this._originalModel && this._originalModel['id'] !== this.id) {
       dirtyModel['id'] = this.id;
     }
     return dirtyModel;
@@ -142,6 +154,7 @@ export class AliasedFileEntityBase extends BaseEntity<
     await this.beforePresent(fieldRequest);
     const response = {
       ...(fieldRequest.size !== undefined && { size: this.size }),
+      ...(fieldRequest.tags !== undefined && { tags: this.tags }),
       ...(fieldRequest.type !== undefined && { type: this.type }),
       ...(fieldRequest.chunks !== undefined && { chunks: await this.getChunks().then((a) => Promise.all(a.map((one) => one.present(fieldRequest.chunks!)))) }),
     };
@@ -351,6 +364,7 @@ export class AliasedFileEntityBase extends BaseEntity<
 
   protected static PRIMITIVE_FIELDS: AliasedFilePrimitiveField[] = [
     'size',
+    'tags',
     'type',
     'id',
   ];

@@ -15,6 +15,7 @@ model AliasedFile {
   id        String          @id
   createdAt DateTime        @default(now())
   size      Int
+  tags      String[]
   type      FileType
   pages     FilePage[]
   chunks    FilePageChunk[]

@@ -38,7 +38,7 @@ import {
 export class FilePageChunkEntityBase extends BaseEntity<
   FilePageChunkModel, Context, FilePageChunkFieldRequest, FilePageChunkResponse
 > {
-  private originalModel: FilePageChunkModel;
+  private _originalModel: FilePageChunkModel;
 
   public id!: string;
   public createdAt!: Date;
@@ -60,34 +60,42 @@ export class FilePageChunkEntityBase extends BaseEntity<
     lock: AsyncLock,
   ) {
     super(context, group, lock);
-    this.originalModel = { ...model };
+    this._originalModel = { ...model };
     this.fromModel(model);
     this.initialize(model, context);
   }
 
   public fromModel(model: Partial<FilePageChunkModel>): void {
     if ('id' in model && model['id'] !== undefined) {
+      this._originalModel['id'] = model['id'];
       this.id = model.id;
     }
     if ('createdAt' in model && model['createdAt'] !== undefined) {
-      this.createdAt = model.createdAt;
+      this._originalModel['createdAt'] = model['createdAt'];
+      this.createdAt = structuredClone(model.createdAt);
     }
     if ('updatedAt' in model && model['updatedAt'] !== undefined) {
-      this.updatedAt = model.updatedAt;
+      this._originalModel['updatedAt'] = model['updatedAt'];
+      this.updatedAt = structuredClone(model.updatedAt);
     }
     if ('fileId' in model && model['fileId'] !== undefined) {
+      this._originalModel['fileId'] = model['fileId'];
       this.fileId = model.fileId;
     }
     if ('pageId' in model && model['pageId'] !== undefined) {
+      this._originalModel['pageId'] = model['pageId'];
       this.pageId = model.pageId;
     }
     if ('chunkId' in model && model['chunkId'] !== undefined) {
+      this._originalModel['chunkId'] = model['chunkId'];
       this.chunkId = model.chunkId;
     }
     if ('startLineId' in model && model['startLineId'] !== undefined) {
+      this._originalModel['startLineId'] = model['startLineId'];
       this.startLineId = model.startLineId;
     }
     if ('endLineId' in model && model['endLineId'] !== undefined) {
+      this._originalModel['endLineId'] = model['endLineId'];
       this.endLineId = model.endLineId;
     }
     this.file = undefined;
@@ -97,8 +105,8 @@ export class FilePageChunkEntityBase extends BaseEntity<
   public toModel(): Partial<FilePageChunkModel> {
     return {
       id: this.id,
-      createdAt: this.createdAt,
-      updatedAt: this.updatedAt,
+      createdAt: structuredClone(this.createdAt),
+      updatedAt: structuredClone(this.updatedAt),
       fileId: this.fileId,
       pageId: this.pageId,
       chunkId: this.chunkId,
@@ -109,28 +117,28 @@ export class FilePageChunkEntityBase extends BaseEntity<
 
   public toDirtyModel(): Partial<FilePageChunkModel> {
     const dirtyModel: Partial<FilePageChunkModel> = {};
-    if ('id' in this.originalModel && this.originalModel['id'] !== this.id) {
+    if ('id' in this._originalModel && this._originalModel['id'] !== this.id) {
       dirtyModel['id'] = this.id;
     }
-    if ('createdAt' in this.originalModel && this.originalModel['createdAt'] !== this.createdAt) {
-      dirtyModel['createdAt'] = this.createdAt;
+    if ('createdAt' in this._originalModel && JSON.stringify(this._originalModel['createdAt']) !== JSON.stringify(this.createdAt)) {
+      dirtyModel['createdAt'] = structuredClone(this.createdAt);
     }
-    if ('updatedAt' in this.originalModel && this.originalModel['updatedAt'] !== this.updatedAt) {
-      dirtyModel['updatedAt'] = this.updatedAt;
+    if ('updatedAt' in this._originalModel && JSON.stringify(this._originalModel['updatedAt']) !== JSON.stringify(this.updatedAt)) {
+      dirtyModel['updatedAt'] = structuredClone(this.updatedAt);
     }
-    if ('fileId' in this.originalModel && this.originalModel['fileId'] !== this.fileId) {
+    if ('fileId' in this._originalModel && this._originalModel['fileId'] !== this.fileId) {
       dirtyModel['fileId'] = this.fileId;
     }
-    if ('pageId' in this.originalModel && this.originalModel['pageId'] !== this.pageId) {
+    if ('pageId' in this._originalModel && this._originalModel['pageId'] !== this.pageId) {
       dirtyModel['pageId'] = this.pageId;
     }
-    if ('chunkId' in this.originalModel && this.originalModel['chunkId'] !== this.chunkId) {
+    if ('chunkId' in this._originalModel && this._originalModel['chunkId'] !== this.chunkId) {
       dirtyModel['chunkId'] = this.chunkId;
     }
-    if ('startLineId' in this.originalModel && this.originalModel['startLineId'] !== this.startLineId) {
+    if ('startLineId' in this._originalModel && this._originalModel['startLineId'] !== this.startLineId) {
       dirtyModel['startLineId'] = this.startLineId;
     }
-    if ('endLineId' in this.originalModel && this.originalModel['endLineId'] !== this.endLineId) {
+    if ('endLineId' in this._originalModel && this._originalModel['endLineId'] !== this.endLineId) {
       dirtyModel['endLineId'] = this.endLineId;
     }
     return dirtyModel;

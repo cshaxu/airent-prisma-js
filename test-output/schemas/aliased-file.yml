@@ -5,6 +5,7 @@ prisma:
     - id
     - createdAt
     - size
+    - tags
     - type
     - pages
     - chunks
@@ -34,12 +35,18 @@ fields:
     isPrisma: true
     internal: false
   - id: 4
+    name: tags
+    type: string[]
+    strategy: primitive
+    isPrisma: true
+    internal: false
+  - id: 5
     name: type
     type: PrismaFileType
     strategy: primitive
     isPrisma: true
     internal: false
-  - id: 5
+  - id: 6
     name: pages
     type: FilePage[]
     strategy: association
