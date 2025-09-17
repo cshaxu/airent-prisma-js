@@ -60,33 +60,49 @@ export class FilePageEntityBase extends BaseEntity<
   ) {
     super(context, group, lock);
     this._originalModel = { ...model };
-    this.fromModel(model);
+    this.fromModelInner(model, false);
     this.initialize(model, context);
   }
 
   public fromModel(model: Partial<FilePageModel>): void {
+    this.fromModelInner(model, false);
+  }
+
+  private fromModelInner(model: Partial<FilePageModel>, isResetOriginalModel: boolean): void {
     if ('id' in model && model['id'] !== undefined) {
-      this._originalModel['id'] = model['id'];
+      if (isResetOriginalModel) {
+        this._originalModel['id'] = model['id'];
+      }
       this.id = model.id;
     }
     if ('createdAt' in model && model['createdAt'] !== undefined) {
-      this._originalModel['createdAt'] = model['createdAt'];
+      if (isResetOriginalModel) {
+        this._originalModel['createdAt'] = model['createdAt'];
+      }
       this.createdAt = structuredClone(model.createdAt);
     }
     if ('updatedAt' in model && model['updatedAt'] !== undefined) {
-      this._originalModel['updatedAt'] = model['updatedAt'];
+      if (isResetOriginalModel) {
+        this._originalModel['updatedAt'] = model['updatedAt'];
+      }
       this.updatedAt = structuredClone(model.updatedAt);
     }
     if ('fileId' in model && model['fileId'] !== undefined) {
-      this._originalModel['fileId'] = model['fileId'];
+      if (isResetOriginalModel) {
+        this._originalModel['fileId'] = model['fileId'];
+      }
       this.fileId = model.fileId;
     }
     if ('pageId' in model && model['pageId'] !== undefined) {
-      this._originalModel['pageId'] = model['pageId'];
+      if (isResetOriginalModel) {
+        this._originalModel['pageId'] = model['pageId'];
+      }
       this.pageId = model.pageId;
     }
     if ('lines' in model && model['lines'] !== undefined) {
-      this._originalModel['lines'] = model['lines'];
+      if (isResetOriginalModel) {
+        this._originalModel['lines'] = model['lines'];
+      }
       this.lines = structuredClone(model.lines) as unknown as PrismaJsonValue;
     }
     this.file = undefined;
@@ -136,7 +152,7 @@ export class FilePageEntityBase extends BaseEntity<
       },
     }, this.context);
     const model = one.toModel();
-    this.fromModel(model);
+    this.fromModelInner(model, true);
     return this;
   }
 
@@ -152,7 +168,7 @@ export class FilePageEntityBase extends BaseEntity<
       data: dirtyModel as Prisma.FilePageUncheckedUpdateInput,
     }, this.context);
     const model = one.toModel();
-    this.fromModel(model);
+    this.fromModelInner(model, true);
     return this;
   }
 
@@ -163,7 +179,7 @@ export class FilePageEntityBase extends BaseEntity<
       },
     }, this.context);
     const model = one.toModel();
-    this.fromModel(model);
+    this.fromModelInner(model, true);
     return this;
   }
 

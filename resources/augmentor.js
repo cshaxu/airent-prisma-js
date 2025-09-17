@@ -117,6 +117,12 @@ function buildAfterType(entity) /* Code[] */ {
   ];
 }
 
+const SHARED_LOADER_LINES = [
+  "const model = one.toModel();",
+  "this.fromModelInner(model, true);",
+  "return this;",
+];
+
 function buildReloaderLines(entity) /* Code[] */ {
   const fieldAliasMap = entity.fields.reduce((acc, f) => {
     acc[f.name] = f.aliasOf ?? f.name;
@@ -128,9 +134,7 @@ function buildReloaderLines(entity) /* Code[] */ {
     ...entity.keys.map((k) => `    ${fieldAliasMap[k]}: this.${k},`),
     "  },",
     "}, this.context);",
-    "const model = one.toModel();",
-    "this.fromModel(model);",
-    "return this;",
+    ...SHARED_LOADER_LINES,
   ];
 }
 
@@ -151,9 +155,7 @@ function buildSaverLines(entity) /* Code[] */ {
     "  },",
     `  data: dirtyModel as Prisma.${prismaModelName}UncheckedUpdateInput,`,
     "}, this.context);",
-    "const model = one.toModel();",
-    "this.fromModel(model);",
-    "return this;",
+    ...SHARED_LOADER_LINES,
   ];
 }
 
@@ -168,9 +170,7 @@ function buildDeleterLines(entity) /* Code[] */ {
     ...entity.keys.map((k) => `    ${fieldAliasMap[k]}: this.${k},`),
     "  },",
     "}, this.context);",
-    "const model = one.toModel();",
-    "this.fromModel(model);",
-    "return this;",
+    ...SHARED_LOADER_LINES,
   ];
 }
 

@@ -59,25 +59,37 @@ export class AliasedFileEntityBase extends BaseEntity<
   ) {
     super(context, group, lock);
     this._originalModel = { ...model };
-    this.fromModel(model);
+    this.fromModelInner(model, false);
     this.initialize(model, context);
   }
 
   public fromModel(model: Partial<AliasedFileModel>): void {
+    this.fromModelInner(model, false);
+  }
+
+  private fromModelInner(model: Partial<AliasedFileModel>, isResetOriginalModel: boolean): void {
     if ('size' in model && model['size'] !== undefined) {
-      this._originalModel['size'] = model['size'];
+      if (isResetOriginalModel) {
+        this._originalModel['size'] = model['size'];
+      }
       this.size = model.size;
     }
     if ('tags' in model && model['tags'] !== undefined) {
-      this._originalModel['tags'] = model['tags'];
+      if (isResetOriginalModel) {
+        this._originalModel['tags'] = model['tags'];
+      }
       this.tags = structuredClone(model.tags);
     }
     if ('type' in model && model['type'] !== undefined) {
-      this._originalModel['type'] = model['type'];
+      if (isResetOriginalModel) {
+        this._originalModel['type'] = model['type'];
+      }
       this.type = structuredClone(model.type);
     }
     if ('id' in model && model['id'] !== undefined) {
-      this._originalModel['id'] = model['id'];
+      if (isResetOriginalModel) {
+        this._originalModel['id'] = model['id'];
+      }
       this.id = model.id;
     }
     this.pages = undefined;
@@ -119,7 +131,7 @@ export class AliasedFileEntityBase extends BaseEntity<
       },
     }, this.context);
     const model = one.toModel();
-    this.fromModel(model);
+    this.fromModelInner(model, true);
     return this;
   }
 
@@ -135,7 +147,7 @@ export class AliasedFileEntityBase extends BaseEntity<
       data: dirtyModel as Prisma.AliasedFileUncheckedUpdateInput,
     }, this.context);
     const model = one.toModel();
-    this.fromModel(model);
+    this.fromModelInner(model, true);
     return this;
   }
 
@@ -146,7 +158,7 @@ export class AliasedFileEntityBase extends BaseEntity<
       },
     }, this.context);
     const model = one.toModel();
-    this.fromModel(model);
+    this.fromModelInner(model, true);
     return this;
   }
 

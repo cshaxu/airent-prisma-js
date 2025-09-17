@@ -61,41 +61,61 @@ export class FilePageChunkEntityBase extends BaseEntity<
   ) {
     super(context, group, lock);
     this._originalModel = { ...model };
-    this.fromModel(model);
+    this.fromModelInner(model, false);
     this.initialize(model, context);
   }
 
   public fromModel(model: Partial<FilePageChunkModel>): void {
+    this.fromModelInner(model, false);
+  }
+
+  private fromModelInner(model: Partial<FilePageChunkModel>, isResetOriginalModel: boolean): void {
     if ('id' in model && model['id'] !== undefined) {
-      this._originalModel['id'] = model['id'];
+      if (isResetOriginalModel) {
+        this._originalModel['id'] = model['id'];
+      }
       this.id = model.id;
     }
     if ('createdAt' in model && model['createdAt'] !== undefined) {
-      this._originalModel['createdAt'] = model['createdAt'];
+      if (isResetOriginalModel) {
+        this._originalModel['createdAt'] = model['createdAt'];
+      }
       this.createdAt = structuredClone(model.createdAt);
     }
     if ('updatedAt' in model && model['updatedAt'] !== undefined) {
-      this._originalModel['updatedAt'] = model['updatedAt'];
+      if (isResetOriginalModel) {
+        this._originalModel['updatedAt'] = model['updatedAt'];
+      }
       this.updatedAt = structuredClone(model.updatedAt);
     }
     if ('fileId' in model && model['fileId'] !== undefined) {
-      this._originalModel['fileId'] = model['fileId'];
+      if (isResetOriginalModel) {
+        this._originalModel['fileId'] = model['fileId'];
+      }
       this.fileId = model.fileId;
     }
     if ('pageId' in model && model['pageId'] !== undefined) {
-      this._originalModel['pageId'] = model['pageId'];
+      if (isResetOriginalModel) {
+        this._originalModel['pageId'] = model['pageId'];
+      }
       this.pageId = model.pageId;
     }
     if ('chunkId' in model && model['chunkId'] !== undefined) {
-      this._originalModel['chunkId'] = model['chunkId'];
+      if (isResetOriginalModel) {
+        this._originalModel['chunkId'] = model['chunkId'];
+      }
       this.chunkId = model.chunkId;
     }
     if ('startLineId' in model && model['startLineId'] !== undefined) {
-      this._originalModel['startLineId'] = model['startLineId'];
+      if (isResetOriginalModel) {
+        this._originalModel['startLineId'] = model['startLineId'];
+      }
       this.startLineId = model.startLineId;
     }
     if ('endLineId' in model && model['endLineId'] !== undefined) {
-      this._originalModel['endLineId'] = model['endLineId'];
+      if (isResetOriginalModel) {
+        this._originalModel['endLineId'] = model['endLineId'];
+      }
       this.endLineId = model.endLineId;
     }
     this.file = undefined;
@@ -153,7 +173,7 @@ export class FilePageChunkEntityBase extends BaseEntity<
       },
     }, this.context);
     const model = one.toModel();
-    this.fromModel(model);
+    this.fromModelInner(model, true);
     return this;
   }
 
@@ -169,7 +189,7 @@ export class FilePageChunkEntityBase extends BaseEntity<
       data: dirtyModel as Prisma.FilePageChunkUncheckedUpdateInput,
     }, this.context);
     const model = one.toModel();
-    this.fromModel(model);
+    this.fromModelInner(model, true);
     return this;
   }
 
@@ -180,7 +200,7 @@ export class FilePageChunkEntityBase extends BaseEntity<
       },
     }, this.context);
     const model = one.toModel();
-    this.fromModel(model);
+    this.fromModelInner(model, true);
     return this;
   }
 
