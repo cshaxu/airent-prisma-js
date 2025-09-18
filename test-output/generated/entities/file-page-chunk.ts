@@ -11,11 +11,14 @@ import { FilePageModel } from '../types/file-page';
 // airent imports
 import {
   AsyncLock,
+  Awaitable,
   BaseEntity,
   EntityConstructor,
   LoadConfig,
   LoadKey,
   Select,
+  batch,
+  clone,
   sequential,
   toArrayMap,
   toObjectMap,
@@ -38,8 +41,6 @@ import {
 export class FilePageChunkEntityBase extends BaseEntity<
   FilePageChunkModel, Context, FilePageChunkFieldRequest, FilePageChunkResponse
 > {
-  private _originalModel: FilePageChunkModel;
-
   public id!: string;
   public createdAt!: Date;
   public updatedAt!: Date;
@@ -60,108 +61,24 @@ export class FilePageChunkEntityBase extends BaseEntity<
     lock: AsyncLock,
   ) {
     super(context, group, lock);
-    this._originalModel = { ...model };
-    this.fromModelInner(model, false);
+    this._aliasMapFromModel['id'] = 'id';
+    this._aliasMapToModel['id'] = 'id';
+    this._aliasMapFromModel['createdAt'] = 'createdAt';
+    this._aliasMapToModel['createdAt'] = 'createdAt';
+    this._aliasMapFromModel['updatedAt'] = 'updatedAt';
+    this._aliasMapToModel['updatedAt'] = 'updatedAt';
+    this._aliasMapFromModel['fileId'] = 'fileId';
+    this._aliasMapToModel['fileId'] = 'fileId';
+    this._aliasMapFromModel['pageId'] = 'pageId';
+    this._aliasMapToModel['pageId'] = 'pageId';
+    this._aliasMapFromModel['chunkId'] = 'chunkId';
+    this._aliasMapToModel['chunkId'] = 'chunkId';
+    this._aliasMapFromModel['startLineId'] = 'startLineId';
+    this._aliasMapToModel['startLineId'] = 'startLineId';
+    this._aliasMapFromModel['endLineId'] = 'endLineId';
+    this._aliasMapToModel['endLineId'] = 'endLineId';
+    this.fromModelInner(model, true);
     this.initialize(model, context);
-  }
-
-  public fromModel(model: Partial<FilePageChunkModel>): void {
-    this.fromModelInner(model, false);
-  }
-
-  private fromModelInner(model: Partial<FilePageChunkModel>, isResetOriginalModel: boolean): void {
-    if ('id' in model && model['id'] !== undefined) {
-      if (isResetOriginalModel) {
-        this._originalModel['id'] = model['id'];
-      }
-      this.id = model.id;
-    }
-    if ('createdAt' in model && model['createdAt'] !== undefined) {
-      if (isResetOriginalModel) {
-        this._originalModel['createdAt'] = model['createdAt'];
-      }
-      this.createdAt = structuredClone(model.createdAt);
-    }
-    if ('updatedAt' in model && model['updatedAt'] !== undefined) {
-      if (isResetOriginalModel) {
-        this._originalModel['updatedAt'] = model['updatedAt'];
-      }
-      this.updatedAt = structuredClone(model.updatedAt);
-    }
-    if ('fileId' in model && model['fileId'] !== undefined) {
-      if (isResetOriginalModel) {
-        this._originalModel['fileId'] = model['fileId'];
-      }
-      this.fileId = model.fileId;
-    }
-    if ('pageId' in model && model['pageId'] !== undefined) {
-      if (isResetOriginalModel) {
-        this._originalModel['pageId'] = model['pageId'];
-      }
-      this.pageId = model.pageId;
-    }
-    if ('chunkId' in model && model['chunkId'] !== undefined) {
-      if (isResetOriginalModel) {
-        this._originalModel['chunkId'] = model['chunkId'];
-      }
-      this.chunkId = model.chunkId;
-    }
-    if ('startLineId' in model && model['startLineId'] !== undefined) {
-      if (isResetOriginalModel) {
-        this._originalModel['startLineId'] = model['startLineId'];
-      }
-      this.startLineId = model.startLineId;
-    }
-    if ('endLineId' in model && model['endLineId'] !== undefined) {
-      if (isResetOriginalModel) {
-        this._originalModel['endLineId'] = model['endLineId'];
-      }
-      this.endLineId = model.endLineId;
-    }
-    this.file = undefined;
-    this.page = undefined;
-  }
-
-  public toModel(): Partial<FilePageChunkModel> {
-    return {
-      id: this.id,
-      createdAt: structuredClone(this.createdAt),
-      updatedAt: structuredClone(this.updatedAt),
-      fileId: this.fileId,
-      pageId: this.pageId,
-      chunkId: this.chunkId,
-      startLineId: this.startLineId,
-      endLineId: this.endLineId,
-    };
-  }
-
-  public toDirtyModel(): Partial<FilePageChunkModel> {
-    const dirtyModel: Partial<FilePageChunkModel> = {};
-    if ('id' in this._originalModel && this._originalModel['id'] !== this.id) {
-      dirtyModel['id'] = this.id;
-    }
-    if ('createdAt' in this._originalModel && JSON.stringify(this._originalModel['createdAt']) !== JSON.stringify(this.createdAt)) {
-      dirtyModel['createdAt'] = structuredClone(this.createdAt);
-    }
-    if ('updatedAt' in this._originalModel && JSON.stringify(this._originalModel['updatedAt']) !== JSON.stringify(this.updatedAt)) {
-      dirtyModel['updatedAt'] = structuredClone(this.updatedAt);
-    }
-    if ('fileId' in this._originalModel && this._originalModel['fileId'] !== this.fileId) {
-      dirtyModel['fileId'] = this.fileId;
-    }
-    if ('pageId' in this._originalModel && this._originalModel['pageId'] !== this.pageId) {
-      dirtyModel['pageId'] = this.pageId;
-    }
-    if ('chunkId' in this._originalModel && this._originalModel['chunkId'] !== this.chunkId) {
-      dirtyModel['chunkId'] = this.chunkId;
-    }
-    if ('startLineId' in this._originalModel && this._originalModel['startLineId'] !== this.startLineId) {
-      dirtyModel['startLineId'] = this.startLineId;
-    }
-    if ('endLineId' in this._originalModel && this._originalModel['endLineId'] !== this.endLineId) {
-      dirtyModel['endLineId'] = this.endLineId;
-    }
-    return dirtyModel;
   }
 
   /** mutators */
@@ -227,6 +144,20 @@ export class FilePageChunkEntityBase extends BaseEntity<
     S extends FilePageChunkFieldRequest
   >(entities: ENTITY[], fieldRequest: S): Promise<SelectedFilePageChunkResponse<S>[]> {
     return await sequential(entities.map((one) => () => one.present(fieldRequest)));
+  }
+
+  /** self creator */
+
+  public static async createOne<ENTITY extends FilePageChunkEntityBase>(
+    this: EntityConstructor<FilePageChunkModel, Context, ENTITY>,
+    model: Partial<FilePageChunkModel>,
+    context: Context
+  ): Promise<ENTITY | null> {
+    const one = await FilePageChunkEntityBase.create({
+      data: model as Prisma.FilePageChunkUncheckedCreateInput,
+    }, context);
+    const createdModel = one.toModel();
+    return (this as any).fromOne(createdModel, context);
   }
 
   /** associations */
@@ -395,13 +326,13 @@ export class FilePageChunkEntityBase extends BaseEntity<
   protected static beforeCreate<ENTITY extends FilePageChunkEntityBase>(
     this: EntityConstructor<FilePageChunkModel, Context, ENTITY>,
     _context: Context
-  ): void | Promise<void> {}
+  ): Awaitable<void> {}
 
   protected static afterCreate<ENTITY extends FilePageChunkEntityBase>(
     this: EntityConstructor<FilePageChunkModel, Context, ENTITY>,
     _one: ENTITY,
     _context: Context
-  ): void | Promise<void> {}
+  ): Awaitable<void> {}
 
   public static async create<
     ENTITY extends FilePageChunkEntityBase,
@@ -435,7 +366,7 @@ export class FilePageChunkEntityBase extends BaseEntity<
     this: EntityConstructor<FilePageChunkModel, Context, ENTITY>,
     _oneBefore: ENTITY,
     _context: Context
-  ): void | Promise<void> {}
+  ): Awaitable<void> {}
 
   protected static afterUpdate<ENTITY extends FilePageChunkEntityBase>(
     this: EntityConstructor<FilePageChunkModel, Context, ENTITY>,
@@ -443,7 +374,7 @@ export class FilePageChunkEntityBase extends BaseEntity<
     _oneAfter: ENTITY,
     _updatedFields: FilePageChunkPrimitiveField[],
     _context: Context
-  ): void | Promise<void> {}
+  ): Awaitable<void> {}
 
   public static async update<
     ENTITY extends FilePageChunkEntityBase,
@@ -475,13 +406,13 @@ export class FilePageChunkEntityBase extends BaseEntity<
     this: EntityConstructor<FilePageChunkModel, Context, ENTITY>,
     _oneBefore: ENTITY,
     _context: Context
-  ): void | Promise<void> {}
+  ): Awaitable<void> {}
 
   protected static afterDelete<ENTITY extends FilePageChunkEntityBase>(
     this: EntityConstructor<FilePageChunkModel, Context, ENTITY>,
     _oneBefore: ENTITY,
     _context: Context
-  ): void | Promise<void> {}
+  ): Awaitable<void> {}
 
   public static async delete<
     ENTITY extends FilePageChunkEntityBase,

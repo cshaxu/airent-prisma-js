@@ -14,13 +14,6 @@ const PRISMA_DBML_FILE_PATH = path.join(
   "prisma/dbml/schema.dbml"
 );
 
-function toKababCase(string) /** string */ {
-  return string
-    .replace(/_/g, "-")
-    .replace(/([a-z])([A-Z])/g, "$1-$2")
-    .toLowerCase();
-}
-
 async function sequential(functions) {
   const results = [];
   for (const func of functions) {
@@ -406,7 +399,7 @@ function reconcile(schemas) {
 }
 
 async function generateOne(entity, outputPath, isVerbose) {
-  const fileName = `${toKababCase(entity.name)}.yml`;
+  const fileName = `${utils.toKababCase(entity.name)}.yml`;
   const outputFilePath = path.join(outputPath, fileName);
   if (isVerbose) {
     console.log(`[AIRENT-PRISMA/INFO] Generating YAML ${outputFilePath} ...`);

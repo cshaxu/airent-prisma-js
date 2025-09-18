@@ -11,11 +11,14 @@ import { FilePageChunkModel } from '../types/file-page-chunk';
 // airent imports
 import {
   AsyncLock,
+  Awaitable,
   BaseEntity,
   EntityConstructor,
   LoadConfig,
   LoadKey,
   Select,
+  batch,
+  clone,
   sequential,
   toArrayMap,
   toObjectMap,
@@ -39,8 +42,6 @@ import {
 export class AliasedFileEntityBase extends BaseEntity<
   AliasedFileModel, Context, AliasedFileFieldRequest, AliasedFileResponse
 > {
-  private _originalModel: AliasedFileModel;
-
   public size!: number;
   public tags!: string[];
   public type!: PrismaFileType;
@@ -58,68 +59,16 @@ export class AliasedFileEntityBase extends BaseEntity<
     lock: AsyncLock,
   ) {
     super(context, group, lock);
-    this._originalModel = { ...model };
-    this.fromModelInner(model, false);
+    this._aliasMapFromModel['size'] = 'size';
+    this._aliasMapToModel['size'] = 'size';
+    this._aliasMapFromModel['tags'] = 'tags';
+    this._aliasMapToModel['tags'] = 'tags';
+    this._aliasMapFromModel['type'] = 'type';
+    this._aliasMapToModel['type'] = 'type';
+    this._aliasMapFromModel['id'] = 'id';
+    this._aliasMapToModel['id'] = 'id';
+    this.fromModelInner(model, true);
     this.initialize(model, context);
-  }
-
-  public fromModel(model: Partial<AliasedFileModel>): void {
-    this.fromModelInner(model, false);
-  }
-
-  private fromModelInner(model: Partial<AliasedFileModel>, isResetOriginalModel: boolean): void {
-    if ('size' in model && model['size'] !== undefined) {
-      if (isResetOriginalModel) {
-        this._originalModel['size'] = model['size'];
-      }
-      this.size = model.size;
-    }
-    if ('tags' in model && model['tags'] !== undefined) {
-      if (isResetOriginalModel) {
-        this._originalModel['tags'] = model['tags'];
-      }
-      this.tags = structuredClone(model.tags);
-    }
-    if ('type' in model && model['type'] !== undefined) {
-      if (isResetOriginalModel) {
-        this._originalModel['type'] = model['type'];
-      }
-      this.type = structuredClone(model.type);
-    }
-    if ('id' in model && model['id'] !== undefined) {
-      if (isResetOriginalModel) {
-        this._originalModel['id'] = model['id'];
-      }
-      this.id = model.id;
-    }
-    this.pages = undefined;
-    this.chunks = undefined;
-  }
-
-  public toModel(): Partial<AliasedFileModel> {
-    return {
-      size: this.size,
-      tags: structuredClone(this.tags),
-      type: structuredClone(this.type),
-      id: this.id,
-    };
-  }
-
-  public toDirtyModel(): Partial<AliasedFileModel> {
-    const dirtyModel: Partial<AliasedFileModel> = {};
-    if ('size' in this._originalModel && this._originalModel['size'] !== this.size) {
-      dirtyModel['size'] = this.size;
-    }
-    if ('tags' in this._originalModel && JSON.stringify(this._originalModel['tags']) !== JSON.stringify(this.tags)) {
-      dirtyModel['tags'] = structuredClone(this.tags);
-    }
-    if ('type' in this._originalModel && JSON.stringify(this._originalModel['type']) !== JSON.stringify(this.type)) {
-      dirtyModel['type'] = structuredClone(this.type);
-    }
-    if ('id' in this._originalModel && this._originalModel['id'] !== this.id) {
-      dirtyModel['id'] = this.id;
-    }
-    return dirtyModel;
   }
 
   /** mutators */
@@ -179,6 +128,20 @@ export class AliasedFileEntityBase extends BaseEntity<
     S extends AliasedFileFieldRequest
   >(entities: ENTITY[], fieldRequest: S): Promise<SelectedAliasedFileResponse<S>[]> {
     return await sequential(entities.map((one) => () => one.present(fieldRequest)));
+  }
+
+  /** self creator */
+
+  public static async createOne<ENTITY extends AliasedFileEntityBase>(
+    this: EntityConstructor<AliasedFileModel, Context, ENTITY>,
+    model: Partial<AliasedFileModel>,
+    context: Context
+  ): Promise<ENTITY | null> {
+    const one = await AliasedFileEntityBase.create({
+      data: model as Prisma.AliasedFileUncheckedCreateInput,
+    }, context);
+    const createdModel = one.toModel();
+    return (this as any).fromOne(createdModel, context);
   }
 
   /** associations */
@@ -349,13 +312,13 @@ export class AliasedFileEntityBase extends BaseEntity<
   protected static beforeCreate<ENTITY extends AliasedFileEntityBase>(
     this: EntityConstructor<AliasedFileModel, Context, ENTITY>,
     _context: Context
-  ): void | Promise<void> {}
+  ): Awaitable<void> {}
 
   protected static afterCreate<ENTITY extends AliasedFileEntityBase>(
     this: EntityConstructor<AliasedFileModel, Context, ENTITY>,
     _one: ENTITY,
     _context: Context
-  ): void | Promise<void> {}
+  ): Awaitable<void> {}
 
   public static async create<
     ENTITY extends AliasedFileEntityBase,
@@ -385,7 +348,7 @@ export class AliasedFileEntityBase extends BaseEntity<
     this: EntityConstructor<AliasedFileModel, Context, ENTITY>,
     _oneBefore: ENTITY,
     _context: Context
-  ): void | Promise<void> {}
+  ): Awaitable<void> {}
 
   protected static afterUpdate<ENTITY extends AliasedFileEntityBase>(
     this: EntityConstructor<AliasedFileModel, Context, ENTITY>,
@@ -393,7 +356,7 @@ export class AliasedFileEntityBase extends BaseEntity<
     _oneAfter: ENTITY,
     _updatedFields: AliasedFilePrimitiveField[],
     _context: Context
-  ): void | Promise<void> {}
+  ): Awaitable<void> {}
 
   public static async update<
     ENTITY extends AliasedFileEntityBase,
@@ -425,13 +388,13 @@ export class AliasedFileEntityBase extends BaseEntity<
     this: EntityConstructor<AliasedFileModel, Context, ENTITY>,
     _oneBefore: ENTITY,
     _context: Context
-  ): void | Promise<void> {}
+  ): Awaitable<void> {}
 
   protected static afterDelete<ENTITY extends AliasedFileEntityBase>(
     this: EntityConstructor<AliasedFileModel, Context, ENTITY>,
     _oneBefore: ENTITY,
     _context: Context
-  ): void | Promise<void> {}
+  ): Awaitable<void> {}
 
   public static async delete<
     ENTITY extends AliasedFileEntityBase,

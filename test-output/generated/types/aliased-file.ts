@@ -1,7 +1,7 @@
 import { FilePageModel } from './file-page';
 import { FilePageChunkModel } from './file-page-chunk';
 // airent imports
-import { Select } from 'airent';
+import { Awaitable, Select } from 'airent';
 
 // entity imports
 import { AliasedFile as PrismaAliasedFile } from '@prisma/client';

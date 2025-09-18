@@ -1,5 +1,16 @@
 // airent imports
-import { LoadKey, toArrayMap, toObjectMap } from 'airent';
+import {
+  AsyncLock,
+  Awaitable,
+  LoadConfig,
+  LoadKey,
+  Select,
+  batch,
+  clone,
+  sequential,
+  toArrayMap,
+  toObjectMap,
+} from 'airent';
 
 // config imports
 import { Context } from '../../test-sources/context';

@@ -174,6 +174,17 @@ function buildDeleterLines(entity) /* Code[] */ {
   ];
 }
 
+function buildSelfCreatorLines(entity) /* Code[] */ {
+  const prismaModelName = utils.toPascalCase(entity.name);
+  return [
+    `const one = await ${entity._strings.baseClass}.create({`,
+    `  data: model as Prisma.${prismaModelName}UncheckedCreateInput,`,
+    "}, context);",
+    "const createdModel = one.toModel();",
+    "return (this as any).fromOne(createdModel, context);",
+  ];
+}
+
 // build entity._code.insideBase
 
 function buildInitializeMethodLines(entity) /* Code[] */ {
@@ -323,13 +334,13 @@ function buildPrismaCreateOneMethodLines(entity) /* Code[] */ {
     `protected static beforeCreate<ENTITY extends ${entity._strings.baseClass}>(`,
     `  this: EntityConstructor<${entity.model}, Context, ENTITY>,`,
     "  _context: Context",
-    "): void | Promise<void> {}",
+    "): Awaitable<void> {}",
     "",
     `protected static afterCreate<ENTITY extends ${entity._strings.baseClass}>(`,
     `  this: EntityConstructor<${entity.model}, Context, ENTITY>,`,
     "  _one: ENTITY,",
     "  _context: Context",
-    "): void | Promise<void> {}",
+    "): Awaitable<void> {}",
   ];
 
   const prismaOneMethodLines = buildPrismaOneMethodLines(
@@ -371,7 +382,7 @@ function buildPrismaUpdateOneMethodLines(entity) /* Code[] */ {
     `  this: EntityConstructor<${entity.model}, Context, ENTITY>,`,
     "  _oneBefore: ENTITY,",
     "  _context: Context",
-    "): void | Promise<void> {}",
+    "): Awaitable<void> {}",
     "",
     `protected static afterUpdate<ENTITY extends ${entity._strings.baseClass}>(`,
     `  this: EntityConstructor<${entity.model}, Context, ENTITY>,`,
@@ -379,7 +390,7 @@ function buildPrismaUpdateOneMethodLines(entity) /* Code[] */ {
     "  _oneAfter: ENTITY,",
     `  _updatedFields: ${utils.toPascalCase(entity.name)}PrimitiveField[],`,
     "  _context: Context",
-    "): void | Promise<void> {}",
+    "): Awaitable<void> {}",
   ];
 
   const prismaOneMethodLines = buildPrismaOneMethodLines(
@@ -408,13 +419,13 @@ function buildPrismaDeleteOneMethodLines(entity) /* Code[] */ {
     `  this: EntityConstructor<${entity.model}, Context, ENTITY>,`,
     "  _oneBefore: ENTITY,",
     "  _context: Context",
-    "): void | Promise<void> {}",
+    "): Awaitable<void> {}",
     "",
     `protected static afterDelete<ENTITY extends ${entity._strings.baseClass}>(`,
     `  this: EntityConstructor<${entity.model}, Context, ENTITY>,`,
     "  _oneBefore: ENTITY,",
     "  _context: Context",
-    "): void | Promise<void> {}",
+    "): Awaitable<void> {}",
   ];
 
   const prismaOneMethodLines = buildPrismaOneMethodLines(
@@ -547,6 +558,7 @@ function augmentOne(entity, config, isVerbose) /* void */ {
   entity._code.reloaderLines = buildReloaderLines(entity);
   entity._code.saverLines = buildSaverLines(entity);
   entity._code.deleterLines = buildDeleterLines(entity);
+  entity._code.selfCreatorLines = buildSelfCreatorLines(entity);
   entity.skipSelfLoader = true;
   entity.fields.filter(utils.isAssociationField).forEach((field) => {
     const { loadConfig } = field._code;

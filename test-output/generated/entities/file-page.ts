@@ -11,11 +11,14 @@ import { FilePageChunkModel } from '../types/file-page-chunk';
 // airent imports
 import {
   AsyncLock,
+  Awaitable,
   BaseEntity,
   EntityConstructor,
   LoadConfig,
   LoadKey,
   Select,
+  batch,
+  clone,
   sequential,
   toArrayMap,
   toObjectMap,
@@ -39,8 +42,6 @@ import {
 export class FilePageEntityBase extends BaseEntity<
   FilePageModel, Context, FilePageFieldRequest, FilePageResponse
 > {
-  private _originalModel: FilePageModel;
-
   public id!: string;
   public createdAt!: Date;
   public updatedAt!: Date;
@@ -59,88 +60,20 @@ export class FilePageEntityBase extends BaseEntity<
     lock: AsyncLock,
   ) {
     super(context, group, lock);
-    this._originalModel = { ...model };
-    this.fromModelInner(model, false);
+    this._aliasMapFromModel['id'] = 'id';
+    this._aliasMapToModel['id'] = 'id';
+    this._aliasMapFromModel['createdAt'] = 'createdAt';
+    this._aliasMapToModel['createdAt'] = 'createdAt';
+    this._aliasMapFromModel['updatedAt'] = 'updatedAt';
+    this._aliasMapToModel['updatedAt'] = 'updatedAt';
+    this._aliasMapFromModel['fileId'] = 'fileId';
+    this._aliasMapToModel['fileId'] = 'fileId';
+    this._aliasMapFromModel['pageId'] = 'pageId';
+    this._aliasMapToModel['pageId'] = 'pageId';
+    this._aliasMapFromModel['lines'] = 'lines';
+    this._aliasMapToModel['lines'] = 'lines';
+    this.fromModelInner(model, true);
     this.initialize(model, context);
-  }
-
-  public fromModel(model: Partial<FilePageModel>): void {
-    this.fromModelInner(model, false);
-  }
-
-  private fromModelInner(model: Partial<FilePageModel>, isResetOriginalModel: boolean): void {
-    if ('id' in model && model['id'] !== undefined) {
-      if (isResetOriginalModel) {
-        this._originalModel['id'] = model['id'];
-      }
-      this.id = model.id;
-    }
-    if ('createdAt' in model && model['createdAt'] !== undefined) {
-      if (isResetOriginalModel) {
-        this._originalModel['createdAt'] = model['createdAt'];
-      }
-      this.createdAt = structuredClone(model.createdAt);
-    }
-    if ('updatedAt' in model && model['updatedAt'] !== undefined) {
-      if (isResetOriginalModel) {
-        this._originalModel['updatedAt'] = model['updatedAt'];
-      }
-      this.updatedAt = structuredClone(model.updatedAt);
-    }
-    if ('fileId' in model && model['fileId'] !== undefined) {
-      if (isResetOriginalModel) {
-        this._originalModel['fileId'] = model['fileId'];
-      }
-      this.fileId = model.fileId;
-    }
-    if ('pageId' in model && model['pageId'] !== undefined) {
-      if (isResetOriginalModel) {
-        this._originalModel['pageId'] = model['pageId'];
-      }
-      this.pageId = model.pageId;
-    }
-    if ('lines' in model && model['lines'] !== undefined) {
-      if (isResetOriginalModel) {
-        this._originalModel['lines'] = model['lines'];
-      }
-      this.lines = structuredClone(model.lines) as unknown as PrismaJsonValue;
-    }
-    this.file = undefined;
-    this.chunks = undefined;
-  }
-
-  public toModel(): Partial<FilePageModel> {
-    return {
-      id: this.id,
-      createdAt: structuredClone(this.createdAt),
-      updatedAt: structuredClone(this.updatedAt),
-      fileId: this.fileId,
-      pageId: this.pageId,
-      lines: structuredClone(this.lines) as any,
-    };
-  }
-
-  public toDirtyModel(): Partial<FilePageModel> {
-    const dirtyModel: Partial<FilePageModel> = {};
-    if ('id' in this._originalModel && this._originalModel['id'] !== this.id) {
-      dirtyModel['id'] = this.id;
-    }
-    if ('createdAt' in this._originalModel && JSON.stringify(this._originalModel['createdAt']) !== JSON.stringify(this.createdAt)) {
-      dirtyModel['createdAt'] = structuredClone(this.createdAt);
-    }
-    if ('updatedAt' in this._originalModel && JSON.stringify(this._originalModel['updatedAt']) !== JSON.stringify(this.updatedAt)) {
-      dirtyModel['updatedAt'] = structuredClone(this.updatedAt);
-    }
-    if ('fileId' in this._originalModel && this._originalModel['fileId'] !== this.fileId) {
-      dirtyModel['fileId'] = this.fileId;
-    }
-    if ('pageId' in this._originalModel && this._originalModel['pageId'] !== this.pageId) {
-      dirtyModel['pageId'] = this.pageId;
-    }
-    if ('lines' in this._originalModel && JSON.stringify(this._originalModel['lines']) !== JSON.stringify(this.lines)) {
-      dirtyModel['lines'] = structuredClone(this.lines) as any;
-    }
-    return dirtyModel;
   }
 
   /** mutators */
@@ -204,6 +137,20 @@ export class FilePageEntityBase extends BaseEntity<
     S extends FilePageFieldRequest
   >(entities: ENTITY[], fieldRequest: S): Promise<SelectedFilePageResponse<S>[]> {
     return await sequential(entities.map((one) => () => one.present(fieldRequest)));
+  }
+
+  /** self creator */
+
+  public static async createOne<ENTITY extends FilePageEntityBase>(
+    this: EntityConstructor<FilePageModel, Context, ENTITY>,
+    model: Partial<FilePageModel>,
+    context: Context
+  ): Promise<ENTITY | null> {
+    const one = await FilePageEntityBase.create({
+      data: model as Prisma.FilePageUncheckedCreateInput,
+    }, context);
+    const createdModel = one.toModel();
+    return (this as any).fromOne(createdModel, context);
   }
 
   /** associations */
@@ -372,13 +319,13 @@ export class FilePageEntityBase extends BaseEntity<
   protected static beforeCreate<ENTITY extends FilePageEntityBase>(
     this: EntityConstructor<FilePageModel, Context, ENTITY>,
     _context: Context
-  ): void | Promise<void> {}
+  ): Awaitable<void> {}
 
   protected static afterCreate<ENTITY extends FilePageEntityBase>(
     this: EntityConstructor<FilePageModel, Context, ENTITY>,
     _one: ENTITY,
     _context: Context
-  ): void | Promise<void> {}
+  ): Awaitable<void> {}
 
   public static async create<
     ENTITY extends FilePageEntityBase,
@@ -410,7 +357,7 @@ export class FilePageEntityBase extends BaseEntity<
     this: EntityConstructor<FilePageModel, Context, ENTITY>,
     _oneBefore: ENTITY,
     _context: Context
-  ): void | Promise<void> {}
+  ): Awaitable<void> {}
 
   protected static afterUpdate<ENTITY extends FilePageEntityBase>(
     this: EntityConstructor<FilePageModel, Context, ENTITY>,
@@ -418,7 +365,7 @@ export class FilePageEntityBase extends BaseEntity<
     _oneAfter: ENTITY,
     _updatedFields: FilePagePrimitiveField[],
     _context: Context
-  ): void | Promise<void> {}
+  ): Awaitable<void> {}
 
   public static async update<
     ENTITY extends FilePageEntityBase,
@@ -450,13 +397,13 @@ export class FilePageEntityBase extends BaseEntity<
     this: EntityConstructor<FilePageModel, Context, ENTITY>,
     _oneBefore: ENTITY,
     _context: Context
-  ): void | Promise<void> {}
+  ): Awaitable<void> {}
 
   protected static afterDelete<ENTITY extends FilePageEntityBase>(
     this: EntityConstructor<FilePageModel, Context, ENTITY>,
     _oneBefore: ENTITY,
     _context: Context
-  ): void | Promise<void> {}
+  ): Awaitable<void> {}
 
   public static async delete<
     ENTITY extends FilePageEntityBase,
