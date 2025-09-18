@@ -314,6 +314,17 @@ function mergeAll(inputSchemas, tableSchemas, config, isVerbose) {
     .map((schemaName) => {
       const tableSchema = tableSchemas.find((s) => s.name === schemaName);
       const inputSchema = inputSchemas.find((s) => s.name === schemaName);
+
+      if (
+        inputSchema !== undefined &&
+        tableSchema === undefined &&
+        inputSchema.isPrisma !== false
+      ) {
+        throw new Error(
+          `[AIRENT-PRISMA/ERROR] "${schemaName}" is missing from Prisma schema.`
+        );
+      }
+
       const entity = tableSchema
         ? inputSchema
           ? inputSchema.isPrisma === false
