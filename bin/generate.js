@@ -436,7 +436,17 @@ async function generate(argv) {
     (entity) => () => generateOne(entity, outputSchemaPath, isVerbose)
   );
   await sequential(functions);
-  console.log("[AIRENT-PRISMA/INFO] Task completed.");
+
+  const prismaCount = outputSchemas.filter((s) => s.isPrisma !== false).length;
+  const nonPrismaCount = outputSchemas.filter(
+    (s) => s.isPrisma === false
+  ).length;
+  console.log(
+    `[AIRENT-PRISMA/INFO] Task completed: ${utils.toPhrase(
+      prismaCount,
+      "Prisma entity"
+    )} and ${utils.toPhrase(nonPrismaCount, "non-Prisma entity")}.`
+  );
 }
 
 module.exports = { generate };
