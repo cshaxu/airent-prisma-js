@@ -152,7 +152,7 @@ export class FilePageChunkEntityBase extends BaseEntity<
     this: EntityConstructor<FilePageChunkModel, Context, ENTITY>,
     model: Partial<FilePageChunkModel>,
     context: Context
-  ): Promise<ENTITY | null> {
+  ): Promise<ENTITY> {
     const one = await FilePageChunkEntityBase.create({
       data: model as Prisma.FilePageChunkUncheckedCreateInput,
     }, context);

@@ -136,7 +136,7 @@ export class AliasedFileEntityBase extends BaseEntity<
     this: EntityConstructor<AliasedFileModel, Context, ENTITY>,
     model: Partial<AliasedFileModel>,
     context: Context
-  ): Promise<ENTITY | null> {
+  ): Promise<ENTITY> {
     const one = await AliasedFileEntityBase.create({
       data: model as Prisma.AliasedFileUncheckedCreateInput,
     }, context);

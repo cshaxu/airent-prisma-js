@@ -145,7 +145,7 @@ export class FilePageEntityBase extends BaseEntity<
     this: EntityConstructor<FilePageModel, Context, ENTITY>,
     model: Partial<FilePageModel>,
     context: Context
-  ): Promise<ENTITY | null> {
+  ): Promise<ENTITY> {
     const one = await FilePageEntityBase.create({
       data: model as Prisma.FilePageUncheckedCreateInput,
     }, context);
