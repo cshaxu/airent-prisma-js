@@ -9,10 +9,7 @@ const utils = require("airent/resources/utils.js");
 
 const PROJECT_PATH = process.cwd();
 const CONFIG_FILE_PATH = path.join(PROJECT_PATH, "airent.config.json");
-const PRISMA_DBML_FILE_PATH = path.join(
-  PROJECT_PATH,
-  "prisma/dbml/schema.dbml"
-);
+const PRISMA_DBML_FILE_NAME = "dbml/schema.dbml";
 
 async function sequential(functions) {
   const results = [];
@@ -171,6 +168,12 @@ function buildTableSchema(table, enums, refs, aliasMap) {
 }
 
 async function loadTableSchemas(aliasMap, config, isVerbose) {
+  const prismaSchemaPath = config.prisma.prismaSchemaPath ?? 'prisma';
+  const PRISMA_DBML_FILE_PATH = path.join(
+    PROJECT_PATH,
+    prismaSchemaPath,
+    PRISMA_DBML_FILE_NAME
+  );
   const database = await loadDbml(PRISMA_DBML_FILE_PATH, isVerbose);
   const enums = new Set(
     database.schemas.flatMap((s) => s.enums).map((e) => e.name)

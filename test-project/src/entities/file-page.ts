@@ -13,7 +13,7 @@ import {
 } from 'airent';
 
 // config imports
-import { Context } from '../../test-sources/context';
+import { Context } from '../context';
 
 // entity imports
 import { FilePage as PrismaFilePage } from '@prisma/client';

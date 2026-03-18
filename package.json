@@ -8,7 +8,7 @@
   },
   "scripts": {
     "build": "rm -rf ./lib && tsc -p tsconfig.json && crlf --set=LF bin/*",
-    "test": "rm -rf ./test-output && node ./bin/index.js generate && airent"
+    "test": "rm -rf ./test-project/schemas/generated && rm -rf ./test-project/src/generated && rm -rf ./test-project/src/entities && node ./bin/index.js generate && airent"
   },
   "repository": {
     "type": "git",
@@ -42,7 +42,7 @@
   "devDependencies": {
     "@types/async-lock": "^1.4.2",
     "@types/node": "^25.5.0",
-    "airent": "github:cshaxu/airent-js#fabf9c9448f2e72f476236341f9632e40651b970",
+    "airent": "github:cshaxu/airent-js#4758b95011c7ca26a81d797e179690eeefcaf800",
     "crlf": "^1.1.1",
     "prisma": "^5.22.0",
     "prisma-dbml-generator": "^0.12.0",

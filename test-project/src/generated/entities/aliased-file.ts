@@ -1,9 +1,9 @@
 // library imports
 import { Prisma } from '@prisma/client';
 // airent imports
-import { ValidatePrismaArgs, batchLoad, batchLoadTopMany, entityCompare } from '../../../src/index';
+import { ValidatePrismaArgs, batchLoad, batchLoadTopMany, entityCompare } from '../../../../src/index';
 // config imports
-import prisma from '../../../test-sources/prisma';
+import prisma from '../../prisma';
 // entity imports
 import { AliasedFilePrimitiveField } from '../types/aliased-file';
 import { FilePageModel } from '../types/file-page';
@@ -25,7 +25,7 @@ import {
 } from 'airent';
 
 // config imports
-import { Context } from '../../../test-sources/context';
+import { Context } from '../../context';
 
 // entity imports
 import { AliasedFile as PrismaAliasedFile } from '@prisma/client';
