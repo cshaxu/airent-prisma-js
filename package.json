@@ -35,17 +35,17 @@
     "resources"
   ],
   "dependencies": {
-    "@dbml/core": "^3.4.3",
-    "@prisma/client": "^5.15.0",
-    "js-yaml": "^4.1.0"
+    "@dbml/core": "^3.14.1",
+    "@prisma/client": "^5.22.0",
+    "js-yaml": "^4.1.1"
   },
   "devDependencies": {
     "@types/async-lock": "^1.4.2",
-    "@types/node": "^20.12.12",
-    "airent": "github:cshaxu/airent-js#6ab375bd0e9fdd4b9e2b7c732380aa1cb9660e67",
+    "@types/node": "^25.5.0",
+    "airent": "github:cshaxu/airent-js#fabf9c9448f2e72f476236341f9632e40651b970",
     "crlf": "^1.1.1",
-    "prisma": "^5.15.0",
+    "prisma": "^5.22.0",
     "prisma-dbml-generator": "^0.12.0",
-    "typescript": "^5.4.5"
+    "typescript": "^5.9.3"
   }
 }
