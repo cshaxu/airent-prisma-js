@@ -120,8 +120,7 @@ function buildTableSchema(table, enums, refs, aliasMap) {
       if (!existingTypeNames.has(rawTypeName)) {
         entity.types.push({
           name: "PrismaJsonValue",
-          aliasOf: "JsonValue",
-          import: "@prisma/client/runtime/library",
+          define: "Prisma.JsonValue",
         });
         existingTypeNames.add(rawTypeName);
       }

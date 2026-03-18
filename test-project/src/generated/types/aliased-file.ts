@@ -1,3 +1,5 @@
+// library imports
+import { Prisma } from '@prisma/client';
 import { FilePageModel } from './file-page';
 import { FilePageChunkModel } from './file-page-chunk';
 // airent imports

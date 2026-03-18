@@ -29,13 +29,13 @@ import { Context } from '../../context';
 
 // entity imports
 import { FilePage as PrismaFilePage } from '@prisma/client';
-import { JsonValue as PrismaJsonValue } from '@prisma/client/runtime/library';
 import { AliasedFileEntity } from '../../entities/aliased-file';
 import { FilePageChunkEntity } from '../../entities/file-page-chunk';
 import {
   FilePageFieldRequest,
   FilePageResponse,
   SelectedFilePageResponse,
+  PrismaJsonValue,
   FilePageModel,
 } from '../types/file-page';
 

@@ -77,7 +77,12 @@ function buildBeforeBase(entity, config) /* Code[] */ {
 
 // build entity._code.beforeType
 function buildBeforeType(entity, config) /* Code[] */ {
-  return buildModelImports(entity, ".");
+  const imports = [
+    "// library imports",
+    "import { Prisma } from '@prisma/client';",
+    ...buildModelImports(entity, "."),
+  ];
+  return imports;
 }
 
 function buildModelImports(entity, relativePath) /* Code[] */ {

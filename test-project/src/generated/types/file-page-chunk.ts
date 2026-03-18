@@ -1,3 +1,5 @@
+// library imports
+import { Prisma } from '@prisma/client';
 import { AliasedFileModel } from './aliased-file';
 import { FilePageModel } from './file-page';
 // airent imports

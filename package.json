@@ -35,17 +35,13 @@
     "resources"
   ],
   "dependencies": {
-    "@dbml/core": "^3.14.1",
-    "@prisma/client": "^5.22.0",
     "js-yaml": "^4.1.1"
   },
   "devDependencies": {
-    "@types/async-lock": "^1.4.2",
+    "@dbml/core": "^6.4.0",
     "@types/node": "^25.5.0",
     "airent": "github:cshaxu/airent-js#4758b95011c7ca26a81d797e179690eeefcaf800",
     "crlf": "^1.1.1",
-    "prisma": "^5.22.0",
-    "prisma-dbml-generator": "^0.12.0",
     "typescript": "^5.9.3"
   }
 }

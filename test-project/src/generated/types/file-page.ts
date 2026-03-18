@@ -1,3 +1,5 @@
+// library imports
+import { Prisma } from '@prisma/client';
 import { AliasedFileModel } from './aliased-file';
 import { FilePageChunkModel } from './file-page-chunk';
 // airent imports
@@ -5,11 +7,12 @@ import { Awaitable, Select } from 'airent';
 
 // entity imports
 import { FilePage as PrismaFilePage } from '@prisma/client';
-import { JsonValue as PrismaJsonValue } from '@prisma/client/runtime/library';
 import { AliasedFileFieldRequest, AliasedFileResponse } from './aliased-file';
 import { FilePageChunkFieldRequest, FilePageChunkResponse } from './file-page-chunk';
 
 /** structs */
+
+export type PrismaJsonValue = Prisma.JsonValue;
 
 export type FilePageModel = PrismaFilePage & { file?: AliasedFileModel; chunks?: FilePageChunkModel[] };
 
