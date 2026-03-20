@@ -35,12 +35,12 @@
     "resources"
   ],
   "dependencies": {
+    "@dbml/core": "^6.4.0",
+    "airent": "github:cshaxu/airent-js#3ed460e82f66ceb038ab833116f1201830a7d161",
     "js-yaml": "^4.1.1"
   },
   "devDependencies": {
-    "@dbml/core": "^6.4.0",
     "@types/node": "^25.5.0",
-    "airent": "github:cshaxu/airent-js#4758b95011c7ca26a81d797e179690eeefcaf800",
     "crlf": "^1.1.1",
     "typescript": "^5.9.3"
   }

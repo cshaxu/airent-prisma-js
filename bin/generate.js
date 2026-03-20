@@ -2,23 +2,15 @@
 
 const { importer, Parser } = require("@dbml/core");
 const fs = require("fs");
-const yaml = require("js-yaml");
 const path = require("path");
+const yaml = require("js-yaml");
 
-const utils = require("airent/resources/utils.js");
+const { sequential } = require("airent");
+const codeUtils = require("airent/resources/utils/code.js");
 
 const PROJECT_PATH = process.cwd();
 const CONFIG_FILE_PATH = path.join(PROJECT_PATH, "airent.config.json");
 const PRISMA_DBML_FILE_NAME = "dbml/schema.dbml";
-
-async function sequential(functions) {
-  const results = [];
-  for (const func of functions) {
-    const result = await func();
-    results.push(result);
-  }
-  return results;
-}
 
 async function loadConfig(isVerbose) {
   if (isVerbose) {
@@ -328,7 +320,7 @@ function mergeAll(inputSchemas, tableSchemas, config, isVerbose) {
           : polish(tableSchema, config)
         : inputSchema;
 
-      const entName = utils.toPascalCase(entity.name);
+      const entName = codeUtils.toPascalCase(entity.name);
       const modelDefinition =
         entity.isPrisma === false ? entity.model : `Prisma${entName}`;
       const modelName = `${entName}Model`;
@@ -341,16 +333,16 @@ function mergeAll(inputSchemas, tableSchemas, config, isVerbose) {
 
       // build prisma model definition
       const prismaAssociationFields = entity.fields
-        .filter(utils.isAssociationField)
+        .filter(codeUtils.isAssociationField)
         .filter((t) => t.isPrisma);
       const prismaModelAssociationDefinitions = prismaAssociationFields.map(
         (f) =>
-          `${f.name}?: ${utils.toPascalCase(
-            utils.toSingularTypeName(f.type)
+          `${f.name}?: ${codeUtils.toPascalCase(
+            codeUtils.toSingularTypeName(f.type)
           )}Model${
-            utils.isArrayField(f)
+            codeUtils.isArrayField(f)
               ? "[]"
-              : utils.isNullableField(f)
+              : codeUtils.isNullableField(f)
               ? " | null"
               : ""
           }`
@@ -373,7 +365,7 @@ function reconcile(schemas) {
   // fields in other entities will reference the correct field name
   const entityAliasMap = schemas.reduce((entityMap, entity) => {
     entityMap[entity.name] = entity.fields
-      .filter((field) => utils.isPrimitiveField(field))
+      .filter((field) => codeUtils.isPrimitiveField(field))
       .filter((field) => field.aliasOf)
       .reduce((fieldMap, field) => {
         fieldMap[field.aliasOf] = field.name;
@@ -386,10 +378,10 @@ function reconcile(schemas) {
       (name) => entityAliasMap[entity.name][name] ?? name
     );
     const fields = entity.fields.map((field) => {
-      if (!utils.isAssociationField(field)) {
+      if (!codeUtils.isAssociationField(field)) {
         return field;
       }
-      const entName = utils.toSingularTypeName(field.type);
+      const entName = codeUtils.toSingularTypeName(field.type);
       const fieldAliasMap = entityAliasMap[entName];
       const targetKeys = field.targetKeys.map(
         (name) => fieldAliasMap[name] ?? name
@@ -401,7 +393,7 @@ function reconcile(schemas) {
 }
 
 async function generateOne(entity, outputPath, isVerbose) {
-  const fileName = `${utils.toKababCase(entity.name)}.yml`;
+  const fileName = `${codeUtils.toKababCase(entity.name)}.yml`;
   const outputFilePath = path.join(outputPath, fileName);
   if (isVerbose) {
     console.log(`[AIRENT-PRISMA/INFO] Generating YAML ${outputFilePath} ...`);
@@ -444,10 +436,10 @@ async function generate(argv) {
     (s) => s.isPrisma === false
   ).length;
   console.log(
-    `[AIRENT-PRISMA/INFO] Task completed: ${utils.toPhrase(
+    `[AIRENT-PRISMA/INFO] Task completed: ${codeUtils.toPhrase(
       prismaCount,
       "Prisma entity"
-    )} and ${utils.toPhrase(nonPrismaCount, "non-Prisma entity")}.`
+    )} and ${codeUtils.toPhrase(nonPrismaCount, "non-Prisma entity")}.`
   );
 }
 

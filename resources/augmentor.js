@@ -1,29 +1,13 @@
 const path = require("path");
-const utils = require("airent/resources/utils.js");
 
-function buildRelativePath(sourcePath, targetPath) /* string */ {
-  const rawRelativePath = path
-    .relative(sourcePath, targetPath)
-    .replaceAll("\\", "/");
-  return rawRelativePath.startsWith(".")
-    ? rawRelativePath
-    : `./${rawRelativePath}`;
-}
-
-function buildRelativeFull(sourcePath, targetPath, config) /* string */ {
-  if (!targetPath.startsWith(".")) {
-    return targetPath;
-  }
-  const suffix = utils.getModuleSuffix(config);
-  const relativePath = buildRelativePath(sourcePath, targetPath);
-  return `${relativePath}${suffix}`;
-}
+const codeUtils = require("airent/resources/utils/code.js");
+const pathUtils = require("airent/resources/utils/path.js");
 
 function augmentConfig(config) /* void */ {
   const { libImportPath } = config.prisma;
   config._packages.prisma = config._packages.prisma ?? {};
   config._packages.prisma.baseToLibFull = libImportPath
-    ? buildRelativeFull(
+    ? pathUtils.buildRelativeFull(
         path.join(config.entityPath, "generated"),
         libImportPath,
         config
@@ -61,7 +45,7 @@ function buildBeforeBase(entity, config) /* Code[] */ {
 
   const entityImports = [
     "// entity imports",
-    `import { ${utils.toPascalCase(entity.name)}PrimitiveField } from '${
+    `import { ${codeUtils.toPascalCase(entity.name)}PrimitiveField } from '${
       config._packages.baseToTypePath
     }/${entity._strings.moduleName}';`,
     ...buildModelImports(entity, config._packages.baseToTypePath),
@@ -87,7 +71,7 @@ function buildBeforeType(entity, config) /* Code[] */ {
 
 function buildModelImports(entity, relativePath) /* Code[] */ {
   const prismaAssociationTypes = entity.fields
-    .filter(utils.isAssociationField)
+    .filter(codeUtils.isAssociationField)
     .filter((f) => f.isPrisma)
     .map((f) => f._type);
   const addedTypeNames = new Set();
@@ -100,7 +84,7 @@ function buildModelImports(entity, relativePath) /* Code[] */ {
         return "";
       }
       addedTypeNames.add(t.name);
-      return `import { ${utils.toPascalCase(
+      return `import { ${codeUtils.toPascalCase(
         t.name
       )}Model } from '${relativePath}/${t._entity._strings.moduleName}';`;
     })
@@ -110,13 +94,13 @@ function buildModelImports(entity, relativePath) /* Code[] */ {
 // build entity._code.afterType
 function buildAfterType(entity) /* Code[] */ {
   const primitiveFields = entity.fields
-    .filter(utils.isPrimitiveField)
+    .filter(codeUtils.isPrimitiveField)
     .map((f) => `'${f.name}'`)
     .join(" | ");
   return [
     "",
     ...(entity.deprecated ? ["/** @deprecated */"] : []),
-    `export type ${utils.toPascalCase(
+    `export type ${codeUtils.toPascalCase(
       entity.name
     )}PrimitiveField = ${primitiveFields};`,
   ];
@@ -148,7 +132,7 @@ function buildSaverLines(entity) /* Code[] */ {
     acc[f.name] = f.aliasOf ?? f.name;
     return acc;
   }, {});
-  const prismaModelName = utils.toPascalCase(entity.name);
+  const prismaModelName = codeUtils.toPascalCase(entity.name);
   return [
     "const dirtyModel = this.toDirtyModel();",
     "if (Object.keys(dirtyModel).length === 0) {",
@@ -180,7 +164,7 @@ function buildDeleterLines(entity) /* Code[] */ {
 }
 
 function buildSelfCreatorLines(entity) /* Code[] */ {
-  const prismaModelName = utils.toPascalCase(entity.name);
+  const prismaModelName = codeUtils.toPascalCase(entity.name);
   return [
     `const one = await ${entity._strings.baseClass}.create({`,
     `  data: model as Prisma.${prismaModelName}UncheckedCreateInput,`,
@@ -194,14 +178,14 @@ function buildSelfCreatorLines(entity) /* Code[] */ {
 
 function buildInitializeMethodLines(entity) /* Code[] */ {
   const lines = entity.fields
-    .filter(utils.isAssociationField)
+    .filter(codeUtils.isAssociationField)
     .filter((f) => f.isPrisma)
     .flatMap((f) => [
       `if (model.${f.name} !== undefined) {`,
       `  this.${f.name} = ${
-        utils.isNullableField(f) ? `model.${f.name} === null ? null : ` : ""
+        codeUtils.isNullableField(f) ? `model.${f.name} === null ? null : ` : ""
       }${f._type._entity._strings.entityClass}.${
-        utils.isArrayField(f) ? "fromArray" : "fromOne"
+        codeUtils.isArrayField(f) ? "fromArray" : "fromOne"
       }(${`model.${f.name}`}, context);`,
       "}",
     ])
@@ -218,7 +202,7 @@ function buildInitializeMethodLines(entity) /* Code[] */ {
 }
 
 function buildPrismaPassThruMethodLines(entity, prismaMethod) /* Code[] */ {
-  const prismaModelName = utils.toCamelCase(entity.name);
+  const prismaModelName = codeUtils.toCamelCase(entity.name);
   return [
     "",
     `public static ${prismaMethod} = prisma.${prismaModelName}.${prismaMethod};`,
@@ -226,7 +210,7 @@ function buildPrismaPassThruMethodLines(entity, prismaMethod) /* Code[] */ {
 }
 
 function buildPrismaArgName(entity, prismaMethod) /* Code */ {
-  return `Prisma.${utils.toPascalCase(entity.name)}${utils.toPascalCase(
+  return `Prisma.${codeUtils.toPascalCase(entity.name)}${codeUtils.toPascalCase(
     prismaMethod
   )}Args`;
 }
@@ -251,7 +235,7 @@ function buildPrismaMethodSignatureLines(
 }
 
 function buildPrismaManyMethodLines(entity, prismaMethod) /* Code[] */ {
-  const prismaModelName = utils.toCamelCase(entity.name);
+  const prismaModelName = codeUtils.toCamelCase(entity.name);
   const prismaArgName = buildPrismaArgName(entity, prismaMethod);
   const signatureLines = buildPrismaMethodSignatureLines(
     entity,
@@ -277,7 +261,7 @@ function buildPrismaOneMethodLines(
   beforeExecutionLines = [],
   afterExecutionLines = []
 ) /* Code[] */ {
-  const prismaModelName = utils.toCamelCase(entity.name);
+  const prismaModelName = codeUtils.toCamelCase(entity.name);
   const prismaArgName = buildPrismaArgName(entity, prismaMethod);
 
   const signatureLines = buildPrismaMethodSignatureLines(
@@ -375,11 +359,11 @@ const AFTER_UPDATE_LINES = [
 function buildPrismaUpdateOneMethodLines(entity) /* Code[] */ {
   const beforeAndAfterHooksLines = [
     "",
-    `protected static PRIMITIVE_FIELDS: ${utils.toPascalCase(
+    `protected static PRIMITIVE_FIELDS: ${codeUtils.toPascalCase(
       entity.name
     )}PrimitiveField[] = [`,
     ...entity.fields
-      .filter(utils.isPrimitiveField)
+      .filter(codeUtils.isPrimitiveField)
       .map((f) => `  '${f.name}',`),
     "];",
     "",
@@ -393,7 +377,7 @@ function buildPrismaUpdateOneMethodLines(entity) /* Code[] */ {
     `  this: EntityConstructor<${entity.model}, Context, ENTITY>,`,
     "  _oneBefore: ENTITY,",
     "  _oneAfter: ENTITY,",
-    `  _updatedFields: ${utils.toPascalCase(entity.name)}PrimitiveField[],`,
+    `  _updatedFields: ${codeUtils.toPascalCase(entity.name)}PrimitiveField[],`,
     "  _context: Context",
     "): Awaitable<void> {}",
   ];
@@ -522,15 +506,15 @@ function buildAssociationFieldModelsLoader(field, config) /* Code */ {
 
   const entity = field._type._entity;
 
-  const entName = utils.toPascalCase(entity.name);
-  const prismaModelName = utils.toCamelCase(entName);
+  const entName = codeUtils.toPascalCase(entity.name);
+  const prismaModelName = codeUtils.toCamelCase(entName);
   const loader = field.orderBy?.length
     ? `(query) => prisma.${prismaModelName}.findMany({ ...query, orderBy: { ${field.orderBy
         .flatMap((item) => Object.keys(item).map((k) => `${k}: '${item[k]}'`))
         .join(", ")} } })`
     : `prisma.${prismaModelName}.findMany`;
 
-  const targetFields = utils.getTargetFields(field);
+  const targetFields = codeUtils.getTargetFields(field);
   const matcher = field.take
     ? `, (key, entity) => ${targetFields
         .map((tf) => `key.${tf.aliasOf ?? tf.name} === entity.${tf.name}`)
@@ -565,7 +549,7 @@ function augmentOne(entity, config, isVerbose) /* void */ {
   entity._code.deleterLines = buildDeleterLines(entity);
   entity._code.selfCreatorLines = buildSelfCreatorLines(entity);
   entity.skipSelfLoader = true;
-  entity.fields.filter(utils.isAssociationField).forEach((field) => {
+  entity.fields.filter(codeUtils.isAssociationField).forEach((field) => {
     const { loadConfig } = field._code;
     const isLoaderGeneratable = buildIsLoaderGeneratable(field);
     loadConfig.isLoaderGeneratable = isLoaderGeneratable;

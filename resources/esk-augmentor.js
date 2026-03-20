@@ -1,4 +1,4 @@
-const utils = require("airent/resources/utils");
+const codeUtils = require("airent/resources/utils/code.js");
 
 /** this optional plugin enables "explodeSourceKey" feature for array fields as source key
  * example in YAML:
@@ -23,18 +23,18 @@ function getLoadConfigGetterLinesWithExplodeSourceKey(field) /* Code[] */ {
     );
   }
   const entity = field._parent;
-  if (!utils.isArrayField(field)) {
+  if (!codeUtils.isArrayField(field)) {
     throw new Error(
       `[AIRENT/PRISMA/ERROR] '${entity.name}.${field.name}' must be an array field to enable 'explodeSourceKey'.`
     );
   }
-  const explodeSourceField = utils.queryField(field.explodeSourceKey, entity);
+  const explodeSourceField = codeUtils.queryField(field.explodeSourceKey, entity);
   if (!explodeSourceField) {
     throw new Error(
       `[AIRENT/PRISMA/ERROR] '${entity.name}.${field.explodeSourceKey}' is missing.`
     );
   }
-  if (!utils.isArrayField(explodeSourceField)) {
+  if (!codeUtils.isArrayField(explodeSourceField)) {
     throw new Error(
       `[AIRENT/PRISMA/ERROR] '${entity.name}.${field.explodeSourceKey}' must be an array field to enable 'explodeSourceKey'.`
     );
@@ -45,14 +45,14 @@ function getLoadConfigGetterLinesWithExplodeSourceKey(field) /* Code[] */ {
     return getterLines;
   }
 
-  const sourceFields = utils.getSourceFields(field);
-  const targetFields = utils.getTargetFields(field);
-  const targetFilters = utils.getTargetFilters(field);
+  const sourceFields = codeUtils.getSourceFields(field);
+  const targetFields = codeUtils.getTargetFields(field);
+  const targetFilters = codeUtils.getTargetFilters(field);
   // reject nullable sourceField whose targetField is required
   const filters = sourceFields
     .filter(
       (sf, i) =>
-        utils.isNullableField(sf) && !utils.isNullableField(targetFields[i])
+        codeUtils.isNullableField(sf) && !codeUtils.isNullableField(targetFields[i])
     )
     .map((sf) => `  .filter((one) => one.${sf._strings.fieldGetter} !== null)`);
   const mappedFields = sourceFields.map((sf, i) => {
@@ -90,18 +90,18 @@ function getLoadConfigSetterLinesWithExplodeSourceKey(field) /* Code[] */ {
     );
   }
   const entity = field._parent;
-  if (!utils.isArrayField(field)) {
+  if (!codeUtils.isArrayField(field)) {
     throw new Error(
       `[AIRENT/PRISMA/ERROR] '${entity.name}.${field.name}' must be an array field to enable 'explodeSourceKey'.`
     );
   }
-  const explodeSourceField = utils.queryField(field.explodeSourceKey, entity);
+  const explodeSourceField = codeUtils.queryField(field.explodeSourceKey, entity);
   if (!explodeSourceField) {
     throw new Error(
       `[AIRENT/PRISMA/ERROR] '${entity.name}.${field.explodeSourceKey}' is missing.`
     );
   }
-  if (!utils.isArrayField(explodeSourceField)) {
+  if (!codeUtils.isArrayField(explodeSourceField)) {
     throw new Error(
       `[AIRENT/PRISMA/ERROR] '${entity.name}.${field.explodeSourceKey}' must be an array field to enable 'explodeSourceKey'.`
     );
@@ -112,8 +112,8 @@ function getLoadConfigSetterLinesWithExplodeSourceKey(field) /* Code[] */ {
     return setterLines;
   }
 
-  const sourceFields = utils.getSourceFields(field);
-  const targetFields = utils.getTargetFields(field);
+  const sourceFields = codeUtils.getSourceFields(field);
+  const targetFields = codeUtils.getTargetFields(field);
 
   // build target mapper
   const targetKeyString = `JSON.stringify({ ${targetFields
@@ -126,14 +126,14 @@ function getLoadConfigSetterLinesWithExplodeSourceKey(field) /* Code[] */ {
   const nullConditions = sourceFields
     .filter(
       (sf, i) =>
-        utils.isNullableField(sf) && !utils.isNullableField(targetFields[i])
+        codeUtils.isNullableField(sf) && !codeUtils.isNullableField(targetFields[i])
     )
     .map((sf) => `one.${sf._strings.fieldGetter} === null`)
     .join(" || ");
   const nullSetter =
     nullConditions.length === 0
       ? ""
-      : `(${nullConditions}) ? ${utils.isArrayField(field) ? "[]" : "null"} : `;
+      : `(${nullConditions}) ? ${codeUtils.isArrayField(field) ? "[]" : "null"} : `;
   const sourceKeyString = `JSON.stringify({ ${targetFields
     .map((tf, i) => {
       if (i === explodeSourceKeyIndex) {

@@ -2,24 +2,17 @@
 
 const fs = require("fs");
 const path = require("path");
-const readline = require("readline");
 
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout,
-});
-
-// Function to ask a question and store the answer in the config object
-function askQuestion(question, defaultAnswer) {
-  return new Promise((resolve) =>
-    rl.question(`${question} (${defaultAnswer}): `, resolve)
-  ).then((a) => (a?.length ? a : defaultAnswer));
-}
-
-async function getShouldEnable(name) {
-  const shouldEnable = await askQuestion(`Enable "${name}"`, "yes");
-  return shouldEnable === "yes";
-}
+const configUtils = require("airent/resources/utils/configurator.js");
+const {
+  createPrompt,
+  getShouldEnable,
+  loadJsonConfig,
+  normalizeConfigCollections,
+  writeJsonConfig,
+} = configUtils;
+const prompt = createPrompt();
+const { askQuestion } = prompt;
 
 /** @typedef {Object} PrismaConfig
  *  @property {?string} libImportPath
@@ -46,11 +39,7 @@ const AIRENT_PRISMA_RESOURCES_PATH = "node_modules/@airent/prisma/resources";
 const PRISMA_AUGMENTOR_PATH = `${AIRENT_PRISMA_RESOURCES_PATH}/augmentor.js`;
 
 async function loadConfig() {
-  const configContent = await fs.promises.readFile(CONFIG_FILE_PATH, "utf8");
-  const config = JSON.parse(configContent);
-  const augmentors = config.augmentors ?? [];
-  const templates = config.templates ?? [];
-  return { ...config, augmentors, templates };
+  return normalizeConfigCollections(await loadJsonConfig(CONFIG_FILE_PATH));
 }
 
 async function configure() {
@@ -59,7 +48,7 @@ async function configure() {
   const isPrismaAugmentorEnabled = augmentors.includes(PRISMA_AUGMENTOR_PATH);
   const shouldEnablePrismaAugmentor = isPrismaAugmentorEnabled
     ? true
-    : await getShouldEnable("Prisma");
+    : await getShouldEnable(askQuestion, "Prisma");
   if (!shouldEnablePrismaAugmentor) {
     return;
   }
@@ -82,7 +71,7 @@ async function configure() {
     !!config.prisma.extensionSchemaPath?.length;
   const shouldEnablePrismaYamlGenerator = isPrismaYamlGeneratorEnabled
     ? false
-    : await getShouldEnable("Prisma Dbml-based YAML Generator");
+    : await getShouldEnable(askQuestion, "Prisma Dbml-based YAML Generator");
   if (shouldEnablePrismaYamlGenerator) {
     config.prisma.extensionSchemaPath = config.schemaPath;
     config.schemaPath = "node_modules/.airent/schemas";
@@ -90,8 +79,8 @@ async function configure() {
       "Default behavior to generate primitive fields (skip | internal | external)",
       "external"
     );
-    config.prisma.primitiveFields = await askQuestion(
-      "Default behavior to generate primitive fields (skip | internal | external)",
+    config.prisma.associationFields = await askQuestion(
+      "Default behavior to generate association fields (skip | internal | external)",
       "internal"
     );
     console.log(
@@ -99,8 +88,7 @@ async function configure() {
     );
   }
 
-  const content = JSON.stringify(config, null, 2) + "\n";
-  await fs.promises.writeFile(CONFIG_FILE_PATH, content);
+  await writeJsonConfig(CONFIG_FILE_PATH, config);
   console.log(`[AIRENT-PRISMA/INFO] Package configured.`);
 }
 
@@ -117,7 +105,7 @@ async function main(args) {
       await configure();
     }
   } finally {
-    rl.close();
+    prompt.close();
   }
 }
 
