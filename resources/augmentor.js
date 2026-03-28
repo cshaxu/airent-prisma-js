@@ -544,11 +544,18 @@ function augmentOne(entity, config, isVerbose) /* void */ {
   entity._code.insideBase.push(...prismaInsideBase);
   entity._code.beforeType.push(...prismaBeforeType);
   entity._code.afterType.push(...prismaAfterType);
-  entity._code.reloaderLines = buildReloaderLines(entity);
-  entity._code.saverLines = buildSaverLines(entity);
-  entity._code.deleterLines = buildDeleterLines(entity);
-  entity._code.selfCreatorLines = buildSelfCreatorLines(entity);
   entity.skipSelfLoader = true;
+  if (entity.isPrisma === false) {
+    entity.skipRefresher = true;
+    entity.skipUpdater = true;
+    entity.skipDeleter = true;
+    entity.skipSelfCreator = true;
+  } else {
+    entity._code.reloaderLines = buildReloaderLines(entity);
+    entity._code.saverLines = buildSaverLines(entity);
+    entity._code.deleterLines = buildDeleterLines(entity);
+    entity._code.selfCreatorLines = buildSelfCreatorLines(entity);
+  }
   entity.fields.filter(codeUtils.isAssociationField).forEach((field) => {
     const { loadConfig } = field._code;
     const isLoaderGeneratable = buildIsLoaderGeneratable(field);
